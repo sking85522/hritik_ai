@@ -56,29 +56,82 @@ class Choice
         // 3. Sampling
         $samples = [];
 
-        // TODO: Implement probability weights $p
         if ($p !== null) {
-            throw new \Exception("Probability weights not yet implemented");
-        }
+            if (count($p) !== count($source)) {
+                throw new \InvalidArgumentException("p must be the same size as a");
+            }
 
-        if ($replace) {
-            for ($i = 0; $i < $count; $i++) {
-                $idx = array_rand($source);
-                $samples[] = $source[$idx];
+            $sum = array_sum($p);
+            if (abs($sum - 1.0) > 1e-6) {
+                throw new \InvalidArgumentException("probabilities do not sum to 1");
+            }
+
+            if ($replace) {
+                for ($i = 0; $i < $count; $i++) {
+                    $rand = mt_rand() / mt_getrandmax();
+                    $cumulative = 0.0;
+                    $idx = count($source) - 1; // Default to last element to avoid precision issues
+                    foreach ($p as $k => $prob) {
+                        $cumulative += $prob;
+                        if ($rand <= $cumulative) {
+                            $idx = $k;
+                            break;
+                        }
+                    }
+                    $samples[] = $source[$idx];
+                }
+            } else {
+                if ($count > count($source)) {
+                    throw new \InvalidArgumentException("Cannot take a larger sample than population when 'replace' is false");
+                }
+
+                $sourceCopy = $source;
+                $pCopy = $p;
+
+                for ($i = 0; $i < $count; $i++) {
+                    // Re-normalize probabilities
+                    $sumCopy = array_sum($pCopy);
+                    $rand = mt_rand() / mt_getrandmax() * $sumCopy;
+
+                    $cumulative = 0.0;
+                    $idx = -1;
+                    foreach ($pCopy as $k => $prob) {
+                        $cumulative += $prob;
+                        if ($rand <= $cumulative) {
+                            $idx = $k;
+                            break;
+                        }
+                    }
+
+                    if ($idx === -1) {
+                        $idx = array_key_last($pCopy); // Fallback
+                    }
+
+                    $samples[] = $sourceCopy[$idx];
+                    unset($sourceCopy[$idx]);
+                    unset($pCopy[$idx]);
+                }
             }
         } else {
-            if ($count > count($source)) {
-                throw new \InvalidArgumentException("Cannot take a larger sample than population when 'replace' is false");
-            }
-            $keys = array_rand($source, $count);
-            if (!is_array($keys)) {
-                $keys = [$keys];
-            }
-            // array_rand returns keys in random order or sorted order depending on implementation, usually we want random order for 'choice' result?
-            // array_rand actually returns sorted keys sometimes. Shuffle is safer.
-            shuffle($keys);
-            foreach ($keys as $key) {
-                $samples[] = $source[$key];
+            if ($replace) {
+                for ($i = 0; $i < $count; $i++) {
+                    $idx = array_rand($source);
+                    $samples[] = $source[$idx];
+                }
+            } else {
+                if ($count > count($source)) {
+                    throw new \InvalidArgumentException("Cannot take a larger sample than population when 'replace' is false");
+                }
+                $keys = array_rand($source, $count);
+                if (!is_array($keys)) {
+                    $keys = [$keys];
+                }
+                // array_rand returns keys in random order or sorted order depending on implementation, usually we want random order for 'choice' result?
+                // array_rand actually returns sorted keys sometimes. Shuffle is safer.
+                shuffle($keys);
+                foreach ($keys as $key) {
+                    $samples[] = $source[$key];
+                }
             }
         }
 
