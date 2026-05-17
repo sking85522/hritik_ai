@@ -1,0 +1,3 @@
+## 2024-05-17 - Stop word filtering with associative arrays
+**Learning:** Using `in_array` for stop word filtering in heavy NLP/RAG loops is a performance bottleneck in PHP. Searching an array is O(n), which is slow when called repeatedly for every token inside `preg_split` loops (like `LocalRAG::tokens`).
+**Action:** Always convert static dictionaries or stop-word lists to hash maps (`['word' => true]`) and use `isset()` for O(1) lookups in tokenization and text processing routines.
