@@ -27,7 +27,6 @@ class IntelligenceRouter {
         // 2. Intent Detection
         $intent = $this->intentDetector->detect($prompt);
         if ($intent === 'unknown') {
-            // FIX: Pass raw prompt string, not the processed array
             $intent = $this->classifier->predict($prompt);
         }
         $intent = $this->intentNormalizer->normalize($intent);
