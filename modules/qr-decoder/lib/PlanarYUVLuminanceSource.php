@@ -162,21 +162,6 @@ final class PlanarYUVLuminanceSource extends LuminanceSource
 		return $pixels;
 	}
 
-	/**
-	 * @return width of image from {@link #renderThumbnail()}
-	 */
-	/*
-  public int getThumbnailWidth() {
-	return getWidth() / THUMBNAIL_SCALE_FACTOR;
-  }*/
-
-	/**
-	 * @return height of image from {@link #renderThumbnail()}
-	 */
-	/**public function getThumbnailHeight(): int
-	{
-		return getHeight() / THUMBNAIL_SCALE_FACTOR;
-	}*/
 
 	/**
 	 *
