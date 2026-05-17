@@ -33,13 +33,39 @@ class NeuralDatabaseRefactorer {
         if (empty($res['data'])) return "Audit complete. No more unorganized seeds found.";
 
         $count = 0;
+        $toInsert = [];
+        $toDelete = [];
+
         foreach ($res['data'] as $row) {
             $category = $this->autoCategorize($row['k_key'], $row['k_value']);
             $targetTable = $this->specializedTables[$category] ?? 'neural_knowledge';
             
             if ($targetTable !== 'neural_knowledge') {
-                $this->moveToTable($row, $targetTable);
+                $k = addslashes($row['k_key']);
+                $v = addslashes($row['k_value']);
+                $toInsert[$targetTable][] = "('$k', '$v')";
+                $toDelete[] = (int)$row['id'];
                 $count++;
+            }
+        }
+
+        // Execute bulk inserts
+        foreach ($toInsert as $table => $values) {
+            if (!empty($values)) {
+                // To avoid overly long queries, chunk the insert values
+                $chunks = array_chunk($values, 100);
+                foreach ($chunks as $chunk) {
+                    $db->query("INSERT INTO $table (k_key, k_value) VALUES " . implode(', ', $chunk));
+                }
+            }
+        }
+
+        // Execute bulk delete
+        if (!empty($toDelete)) {
+            $deleteChunks = array_chunk($toDelete, 100);
+            foreach ($deleteChunks as $chunk) {
+                $ids = implode(',', $chunk);
+                $db->query("DELETE FROM neural_knowledge WHERE id IN ($ids)");
             }
         }
 
@@ -60,18 +86,6 @@ class NeuralDatabaseRefactorer {
         
         // Default
         return 'science';
-    }
-
-    private function moveToTable(array $row, string $table): void {
-        global $db;
-        $k = addslashes($row['k_key']);
-        $v = addslashes($row['k_value']);
-        
-        // Insert into new table
-        $db->query("INSERT INTO $table (k_key, k_value) VALUES ('$k', '$v')");
-        
-        // Remove from main table to mark as processed
-        $db->query("DELETE FROM neural_knowledge WHERE id = " . $row['id']);
     }
 
     private function ensureTablesExist(): void {
