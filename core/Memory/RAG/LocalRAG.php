@@ -3,9 +3,12 @@ namespace Core\Memory\RAG;
 
 class LocalRAG {
     private array $stopWords = [
-        'kya', 'hai', 'h', 'ho', 'hot', 'hoti', 'ka', 'ki', 'ke', 'ko', 'se', 'me', 'mein',
-        'btao', 'batao', 'simple', 'ek', 'the', 'is', 'are', 'what', 'who', 'how', 'tell',
-        'about', 'please', 'plz', 'mujhe', 'tum', 'tumhara', 'tumara'
+        'kya' => true, 'hai' => true, 'h' => true, 'ho' => true, 'hot' => true, 'hoti' => true,
+        'ka' => true, 'ki' => true, 'ke' => true, 'ko' => true, 'se' => true, 'me' => true, 'mein' => true,
+        'btao' => true, 'batao' => true, 'simple' => true, 'ek' => true, 'the' => true, 'is' => true,
+        'are' => true, 'what' => true, 'who' => true, 'how' => true, 'tell' => true,
+        'about' => true, 'please' => true, 'plz' => true, 'mujhe' => true, 'tum' => true,
+        'tumhara' => true, 'tumara' => true
     ];
 
     public function __construct(?string $verifiedPath = null, ?string $learnedPath = null) {}
@@ -178,7 +181,7 @@ class LocalRAG {
         $tokens = [];
 
         foreach ($parts as $part) {
-            if ($part === '' || strlen($part) < 2 || in_array($part, $this->stopWords, true)) {
+            if ($part === '' || strlen($part) < 2 || isset($this->stopWords[$part])) {
                 continue;
             }
             $tokens[$part] = true;
