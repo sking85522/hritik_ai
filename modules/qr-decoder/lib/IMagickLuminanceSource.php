@@ -56,32 +56,6 @@ final class IMagickLuminanceSource extends LuminanceSource
 		throw new \RuntimeException("This LuminanceSource does not support rotateCounterClockwise45");
 	}
 
-	/**
-	 * TODO: move to some utility class or something
-	 * Converts shorthand memory notation value to bytes
-	 * From http://php.net/manual/en/function.ini-get.php
-	 *
-	 * @param int $val Memory size shorthand notation string
-	 */
-	protected static function kmgStringToBytes(string $val)
-	{
-		$val = trim($val);
-		$last = strtolower($val[strlen($val) - 1]);
-		$val = substr($val, 0, -1);
-		switch ($last) {
-				// The 'G' modifier is available since PHP 5.1.0
-			case 'g':
-				$val *= 1024;
-				// no break
-			case 'm':
-				$val *= 1024;
-				// no break
-			case 'k':
-				$val *= 1024;
-		}
-		return $val;
-	}
-
 	public function _IMagickLuminanceSource(\Imagick $image, $width, $height): void
 	{
 		parent::__construct($width, $height);
@@ -98,7 +72,7 @@ final class IMagickLuminanceSource extends LuminanceSource
 
 		$image->setImageColorspace(\Imagick::COLORSPACE_GRAY);
 		// Check that we actually have enough space to do it
-		if (ini_get('memory_limit') != -1 && $width * $height * 16 * 3 > $this->kmgStringToBytes(ini_get('memory_limit'))) {
+		if (ini_get('memory_limit') != -1 && $width * $height * 16 * 3 > kmgStringToBytes(ini_get('memory_limit'))) {
 			throw new \RuntimeException("PHP Memory Limit does not allow pixel export.");
 		}
 		$pixels = $image->exportImagePixels(1, 1, $width, $height, "RGB", \Imagick::PIXEL_CHAR);
