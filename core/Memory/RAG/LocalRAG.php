@@ -2,6 +2,10 @@
 namespace Core\Memory\RAG;
 
 class LocalRAG {
+    // Cache to prevent loading 5000+ rows from the database multiple times per request lifecycle
+    private array $cache = [];
+    private bool $cacheLoaded = false;
+
     private array $stopWords = [
         'kya' => true, 'hai' => true, 'h' => true, 'ho' => true, 'hot' => true, 'hoti' => true,
         'ka' => true, 'ki' => true, 'ke' => true, 'ko' => true, 'se' => true, 'me' => true, 'mein' => true,
@@ -113,6 +117,11 @@ class LocalRAG {
     }
 
     private function loadAll(): array {
+        // Return cached items if already loaded to optimize RAG performance
+        if ($this->cacheLoaded) {
+            return $this->cache;
+        }
+
         global $db;
         if (!isset($db) || $db === null) {
             return [];
@@ -141,6 +150,9 @@ class LocalRAG {
                 'quality' => (float)($row['quality_score'] ?? 0.82)
             ];
         }
+
+        $this->cache = $items;
+        $this->cacheLoaded = true;
 
         return $items;
     }
