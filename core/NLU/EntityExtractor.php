@@ -116,14 +116,14 @@ class EntityExtractor {
     private function extractKeywords(string $text): array {
         $text = strtolower($text);
         // Remove stop words and get meaningful keywords
-        $stopWords = ['is', 'the', 'a', 'an', 'of', 'in', 'to', 'for', 'and', 'or', 'but',
-            'hai', 'ka', 'ke', 'ki', 'me', 'se', 'ko', 'ne', 'par', 'kya', 'ye',
-            'what', 'who', 'when', 'where', 'how', 'which', 'that', 'this', 'with',
-            'है', 'था', 'थी', 'थे', 'का', 'के', 'की', 'में', 'को'];
+        static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'of'=>true, 'in'=>true, 'to'=>true, 'for'=>true, 'and'=>true, 'or'=>true, 'but'=>true,
+            'hai'=>true, 'ka'=>true, 'ke'=>true, 'ki'=>true, 'me'=>true, 'se'=>true, 'ko'=>true, 'ne'=>true, 'par'=>true, 'kya'=>true, 'ye'=>true,
+            'what'=>true, 'who'=>true, 'when'=>true, 'where'=>true, 'how'=>true, 'which'=>true, 'that'=>true, 'this'=>true, 'with'=>true,
+            'है'=>true, 'था'=>true, 'थी'=>true, 'थे'=>true, 'का'=>true, 'के'=>true, 'की'=>true, 'में'=>true, 'को'=>true];
         
         $clean = preg_replace('/[^a-z0-9\s\p{L}]/u', ' ', $text);
         $words = preg_split('/\s+/', $clean, -1, PREG_SPLIT_NO_EMPTY);
-        $keywords = array_filter($words, fn($w) => mb_strlen($w) > 2 && !in_array($w, $stopWords));
+        $keywords = array_filter($words, fn($w) => mb_strlen($w) > 2 && !isset($stopWords[$w]));
         
         return array_values(array_unique($keywords));
     }
