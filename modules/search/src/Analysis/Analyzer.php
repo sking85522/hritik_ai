@@ -5,8 +5,8 @@ namespace SearchPHP\Analysis;
 class Analyzer
 {
     private $stopWords = [
-        'a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'how', 'i', 'in', 'is', 'it',
-        'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'what', 'when', 'where', 'who', 'will', 'with'
+        'a' => true, 'about' => true, 'an' => true, 'and' => true, 'are' => true, 'as' => true, 'at' => true, 'be' => true, 'by' => true, 'for' => true, 'from' => true, 'how' => true, 'i' => true, 'in' => true, 'is' => true, 'it' => true,
+        'of' => true, 'on' => true, 'or' => true, 'that' => true, 'the' => true, 'this' => true, 'to' => true, 'was' => true, 'what' => true, 'when' => true, 'where' => true, 'who' => true, 'will' => true, 'with' => true
     ];
 
     public function analyze(string $text): array
@@ -22,7 +22,7 @@ class Analyzer
 
         // Filter out stop words and short tokens
         $filtered = array_filter($tokens, function($token) {
-            return strlen($token) > 1 && !in_array($token, $this->stopWords);
+            return strlen($token) > 1 && !isset($this->stopWords[$token]);
         });
 
         // Stemming could be added here (e.g., Porter Stemmer), but we will keep it simple for now

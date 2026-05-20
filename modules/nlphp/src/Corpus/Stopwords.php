@@ -21,13 +21,18 @@ class Stopwords
         'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"
     ];
 
+    private static $english_stopwords_map = null;
+
     /**
      * Removes stop words from an array of tokens.
      */
     public static function remove(array $tokens): array
     {
+        if (self::$english_stopwords_map === null) {
+            self::$english_stopwords_map = array_fill_keys(self::$english_stopwords, true);
+        }
         return array_values(array_filter($tokens, function($token) {
-            return !in_array(strtolower($token), self::$english_stopwords);
+            return !isset(self::$english_stopwords_map[strtolower($token)]);
         }));
     }
 
