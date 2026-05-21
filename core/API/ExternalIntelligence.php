@@ -11,8 +11,8 @@ class ExternalIntelligence {
         $cleanQuery = $this->extractKeywords($query);
         
         // Tech term disambiguation (so "python" -> "python programming language")
-        $techTerms = ['python', 'java', 'ruby', 'swift', 'go', 'rust', 'c', 'r', 'php', 'javascript', 'html', 'css'];
-        if (in_array(strtolower($cleanQuery), $techTerms, true)) {
+        static $techTerms = ['python' => true, 'java' => true, 'ruby' => true, 'swift' => true, 'go' => true, 'rust' => true, 'c' => true, 'r' => true, 'php' => true, 'javascript' => true, 'html' => true, 'css' => true];
+        if (isset($techTerms[strtolower($cleanQuery)])) {
             $cleanQuery = $cleanQuery . ' programming language';
         }
 
@@ -33,9 +33,9 @@ class ExternalIntelligence {
 
     private function queryWikipedia(string $query): ?string {
         // Disambiguation for common tech terms
-        $techTerms = ['python', 'java', 'ruby', 'swift', 'go', 'rust', 'c', 'r'];
+        static $techTerms = ['python' => true, 'java' => true, 'ruby' => true, 'swift' => true, 'go' => true, 'rust' => true, 'c' => true, 'r' => true];
         $queryLower = strtolower(trim($query));
-        if (in_array($queryLower, $techTerms, true)) {
+        if (isset($techTerms[$queryLower])) {
             $query = $query . ' (programming language)';
         }
         

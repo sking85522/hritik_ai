@@ -116,10 +116,10 @@ class LocalLanguageModel {
     }
 
     private function pickFocusToken(array $tokens, array $attentionTokens): ?string {
-        $blocked = ['what', 'who', 'why', 'how', 'kya', 'kaise', 'meaning', 'define', 'hai', 'h'];
+        static $blocked = ['what' => true, 'who' => true, 'why' => true, 'how' => true, 'kya' => true, 'kaise' => true, 'meaning' => true, 'define' => true, 'hai' => true, 'h' => true];
         foreach (array_merge($tokens, $attentionTokens) as $token) {
             $token = strtolower(trim((string)$token));
-            if ($token !== '' && !in_array($token, $blocked, true)) return $token;
+            if ($token !== '' && !isset($blocked[$token])) return $token;
         }
         return null;
     }
