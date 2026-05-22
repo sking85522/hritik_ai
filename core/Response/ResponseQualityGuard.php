@@ -67,7 +67,8 @@ class ResponseQualityGuard {
         $text = $this->clean($text);
         $normalized = strtolower($text);
 
-        if ($normalized === '' || in_array($normalized, ['qa', 'general', 'php'], true)) {
+        static $allowed = ['qa'=>true, 'general'=>true, 'php'=>true];
+        if ($normalized === '' || isset($allowed[$normalized])) {
             return true;
         }
 
@@ -149,12 +150,12 @@ class ResponseQualityGuard {
     }
 
     public function extractKeywords(string $text): array {
-        $stopWords = ['is', 'the', 'a', 'an', 'me', 'my', 'what', 'who', 'how', 'where', 'kyu', 'kaise', 'btao', 'batano', 'kya', 'hai', 'ki', 'ka', 'ke', 'aur', 'mein', 'main', 'to', 'of', 'hritik', 'ai'];
+        static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'me'=>true, 'my'=>true, 'what'=>true, 'who'=>true, 'how'=>true, 'where'=>true, 'kyu'=>true, 'kaise'=>true, 'btao'=>true, 'batano'=>true, 'kya'=>true, 'hai'=>true, 'ki'=>true, 'ka'=>true, 'ke'=>true, 'aur'=>true, 'mein'=>true, 'main'=>true, 'to'=>true, 'of'=>true, 'hritik'=>true, 'ai'=>true];
         $text = strtolower(preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text));
         $words = preg_split('/\s+/', trim($text));
 
         return array_values(array_filter($words ?: [], function ($word) use ($stopWords) {
-            return strlen($word) > 2 && !in_array($word, $stopWords, true);
+            return strlen($word) > 2 && !isset($stopWords[$word]);
         }));
     }
 

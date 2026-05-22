@@ -167,11 +167,11 @@ class OnlineCloudMemory {
     }
 
     private function extractKeywords(string $prompt): array {
-        $stopWords = ['is', 'the', 'a', 'an', 'me', 'my', 'what', 'who', 'how', 'where', 'kyu', 'kaise', 'btao', 'batano', 'kya', 'hai', 'ki', 'ka', 'ke', 'aur', 'mein', 'main', 'to', 'of'];
+        static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'me'=>true, 'my'=>true, 'what'=>true, 'who'=>true, 'how'=>true, 'where'=>true, 'kyu'=>true, 'kaise'=>true, 'btao'=>true, 'batano'=>true, 'kya'=>true, 'hai'=>true, 'ki'=>true, 'ka'=>true, 'ke'=>true, 'aur'=>true, 'mein'=>true, 'main'=>true, 'to'=>true, 'of'=>true];
         $words = preg_split('/\s+/', $prompt);
 
         return array_values(array_filter($words, function ($w) use ($stopWords) {
-            return strlen($w) > 2 && !in_array($w, $stopWords, true);
+            return strlen($w) > 2 && !isset($stopWords[$w]);
         }));
     }
 
