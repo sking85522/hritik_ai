@@ -13,14 +13,27 @@ class RMSprop {
         $this->epsilon = $epsilon;
     }
 
-    public function update(string $paramKey, array &$params, array $gradients): void {
-        if (!isset($this->cache[$paramKey])) {
-            $this->cache[$paramKey] = array_fill(0, count($params), 0.0);
+    public function update(array &$weights, array &$biases, array $dWeights, array $dBiases): void {
+        $input_size = count($weights);
+        $output_size = count($biases);
+
+        if (!isset($this->cache['weights'])) {
+            $this->cache['weights'] = array_fill(0, $input_size, array_fill(0, $output_size, 0.0));
+            $this->cache['biases'] = array_fill(0, $output_size, 0.0);
         }
 
-        for ($i = 0; $i < count($params); $i++) {
-            $this->cache[$paramKey][$i] = $this->decay * $this->cache[$paramKey][$i] + (1 - $this->decay) * ($gradients[$i] ** 2);
-            $params[$i] -= $this->lr * $gradients[$i] / (sqrt($this->cache[$paramKey][$i]) + $this->epsilon);
+        // Update weights
+        for ($i = 0; $i < $input_size; $i++) {
+            for ($j = 0; $j < $output_size; $j++) {
+                $this->cache['weights'][$i][$j] = $this->decay * $this->cache['weights'][$i][$j] + (1 - $this->decay) * ($dWeights[$i][$j] ** 2);
+                $weights[$i][$j] -= $this->lr * $dWeights[$i][$j] / (sqrt($this->cache['weights'][$i][$j]) + $this->epsilon);
+            }
+        }
+
+        // Update biases
+        for ($j = 0; $j < $output_size; $j++) {
+            $this->cache['biases'][$j] = $this->decay * $this->cache['biases'][$j] + (1 - $this->decay) * ($dBiases[$j] ** 2);
+            $biases[$j] -= $this->lr * $dBiases[$j] / (sqrt($this->cache['biases'][$j]) + $this->epsilon);
         }
     }
 }
