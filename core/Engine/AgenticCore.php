@@ -18,6 +18,7 @@ class AgenticCore {
     private \Core\Tools\Intelligence\TranslatorTool $translator;
     private \Core\Tools\Intelligence\DataConverterTool $converter;
     private \Core\Evolution\SelfRepairCore $repairCore;
+    private \Core\GenerativeAI\GenerativeAIAssistant $generativeAI;
     
     /** @var CommandInterface[] */
     private array $commands = [];
@@ -33,6 +34,7 @@ class AgenticCore {
         $this->translator = new \Core\Tools\Intelligence\TranslatorTool();
         $this->converter = new \Core\Tools\Intelligence\DataConverterTool();
         $this->repairCore = new \Core\Evolution\SelfRepairCore();
+        $this->generativeAI = new \Core\GenerativeAI\GenerativeAIAssistant();
 
         $this->registerCommands();
     }
@@ -70,9 +72,9 @@ class AgenticCore {
             $intent = $this->nluModel->predict($task);
         }
 
-        // Fallback to legacy regex if intent couldn't be accurately identified
+        // Fallback to Generative Thinking if intent couldn't be accurately identified
         if (!$intent) {
-            return "Query couldn't be understood. Try rephrasing.";
+            return $this->generativeAI->generateThought($task);
         }
 
         // Execute logic based on detected Intent (and extract entities if needed)
@@ -223,6 +225,9 @@ class AgenticCore {
                 }
                 return "Provide text and format to convert to.";
 
+            case 'generate_thought':
+                return $this->generativeAI->generateThought($task);
+
             default:
                 return "Intent detected as: $intent, but no handler exists yet.";
         }
@@ -275,7 +280,8 @@ class AgenticCore {
                 "reach singularity", "who are you really", "what is your true purpose",
                 "train lines", "start training", "learn massive data",
                 "translate to", "convert language", "translate text",
-                "convert to", "change format to", "transform into"
+                "convert to", "change format to", "transform into",
+                "tell me a joke", "talk to me", "write a story", "what do you think", "say something"
             ];
 
             $labels = [
@@ -303,7 +309,8 @@ class AgenticCore {
                 "singularity", "singularity", "singularity",
                 "train", "train", "train",
                 "translate", "translate", "translate",
-                "convert", "convert", "convert"
+                "convert", "convert", "convert",
+                "generate_thought", "generate_thought", "generate_thought", "generate_thought", "generate_thought"
             ];
 
             $this->nluModel->fit($texts, $labels);
