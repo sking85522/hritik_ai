@@ -2,7 +2,7 @@
 namespace NeuralPHP\Losses;
 
 class BinaryCrossEntropy {
-    public function compute(array $predicted, array $target): float {
+    public function calculate(array $target, array $predicted): float {
         $loss = 0.0;
         $epsilon = 1e-15;
         $n = count($target);
@@ -13,7 +13,7 @@ class BinaryCrossEntropy {
         return $loss / $n;
     }
 
-    public function gradient(array $predicted, array $target): array {
+    public function derivative(array $target, array $predicted): array {
         $grad = [];
         $epsilon = 1e-15;
         for ($i = 0; $i < count($target); $i++) {

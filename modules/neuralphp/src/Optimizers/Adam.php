@@ -21,26 +21,57 @@ class Adam {
         $this->epsilon = $epsilon;
     }
 
-    public function update(string $paramKey, array &$params, array $gradients): void {
+    public function update(array &$weights, array &$biases, array $dWeights, array $dBiases): void {
         $this->t++;
 
-        if (!isset($this->m[$paramKey])) {
-            $this->m[$paramKey] = array_fill(0, count($params), 0.0);
-            $this->v[$paramKey] = array_fill(0, count($params), 0.0);
+        $input_size = count($weights);
+        $output_size = count($biases);
+
+        // Ensure per-layer caching by using a combination of input_size and output_size or checking each layer dynamically.
+        // Better yet, initialize dynamically if missing
+        if (!isset($this->m['weights'])) {
+            $this->m['weights'] = [];
+            $this->v['weights'] = [];
+            $this->m['biases'] = [];
+            $this->v['biases'] = [];
         }
 
-        for ($i = 0; $i < count($params); $i++) {
-            // Update biased first moment
-            $this->m[$paramKey][$i] = $this->beta1 * $this->m[$paramKey][$i] + (1 - $this->beta1) * $gradients[$i];
-            // Update biased second moment
-            $this->v[$paramKey][$i] = $this->beta2 * $this->v[$paramKey][$i] + (1 - $this->beta2) * ($gradients[$i] ** 2);
+        // Dynamically build arrays if missing for this particular input index
+        for ($i = 0; $i < $input_size; $i++) {
+            if (!isset($this->m['weights'][$i])) {
+                $this->m['weights'][$i] = array_fill(0, $output_size, 0.0);
+                $this->v['weights'][$i] = array_fill(0, $output_size, 0.0);
+            }
+        }
+        for ($j = 0; $j < $output_size; $j++) {
+            if (!isset($this->m['biases'][$j])) {
+                 $this->m['biases'][$j] = 0.0;
+                 $this->v['biases'][$j] = 0.0;
+            }
+        }
 
-            // Bias correction
-            $mHat = $this->m[$paramKey][$i] / (1 - $this->beta1 ** $this->t);
-            $vHat = $this->v[$paramKey][$i] / (1 - $this->beta2 ** $this->t);
+        // Update weights
+        for ($i = 0; $i < $input_size; $i++) {
+            for ($j = 0; $j < $output_size; $j++) {
+                $this->m['weights'][$i][$j] = $this->beta1 * $this->m['weights'][$i][$j] + (1 - $this->beta1) * $dWeights[$i][$j];
+                $this->v['weights'][$i][$j] = $this->beta2 * $this->v['weights'][$i][$j] + (1 - $this->beta2) * ($dWeights[$i][$j] ** 2);
 
-            // Update params
-            $params[$i] -= $this->lr * $mHat / (sqrt($vHat) + $this->epsilon);
+                $mHat = $this->m['weights'][$i][$j] / (1 - $this->beta1 ** $this->t);
+                $vHat = $this->v['weights'][$i][$j] / (1 - $this->beta2 ** $this->t);
+
+                $weights[$i][$j] -= $this->lr * $mHat / (sqrt($vHat) + $this->epsilon);
+            }
+        }
+
+        // Update biases
+        for ($j = 0; $j < $output_size; $j++) {
+            $this->m['biases'][$j] = $this->beta1 * $this->m['biases'][$j] + (1 - $this->beta1) * $dBiases[$j];
+            $this->v['biases'][$j] = $this->beta2 * $this->v['biases'][$j] + (1 - $this->beta2) * ($dBiases[$j] ** 2);
+
+            $mHat = $this->m['biases'][$j] / (1 - $this->beta1 ** $this->t);
+            $vHat = $this->v['biases'][$j] / (1 - $this->beta2 ** $this->t);
+
+            $biases[$j] -= $this->lr * $mHat / (sqrt($vHat) + $this->epsilon);
         }
     }
 
