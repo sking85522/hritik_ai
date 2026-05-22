@@ -22,8 +22,11 @@ class AgenticCore {
     /** @var CommandInterface[] */
     private array $commands = [];
 
+    private $nluModel;
+
     public function __construct()
     {
+        $this->initializeNLU();
         $this->fileSystem = new FileEditor();
         $this->terminal = new ShellExecutor();
         $this->safetyGuard = new \Core\Tools\Safety\NeuralSafetyGuard();
@@ -42,183 +45,187 @@ class AgenticCore {
         
         $task = strtolower($task);
 
-        // Check refactored commands first
-        foreach ($this->commands as $command) {
-            if ($command->canProcess($task)) {
-                return $command->process($task);
-            }
-        }
-
-        // --- LEGACY COMMANDS (To be refactored) ---
-
-        // 2. Automated Testing: "test file <path>"
-        if (preg_match('/test file ([\w\.\/]+)/', $task, $m)) {
-            $path = $m[1];
-            $output = $this->terminal->runPhp($path);
-            return "[AGENT] Test Results for $path:\n" . $output;
-        }
-
-        // 3. Technical Research: "research <topic>"
-        if (preg_match('/research (.*)/', $task, $m)) {
-            $search = new \Core\Tools\Search\WebProSearch();
-            return $search->researchCode($m[1]);
-        }
-
-        // 4. Autonomous Debugging: "debug <error message>"
-        if (preg_match('/debug (.*)/', $task, $m)) {
-            $debugger = new \Core\Tools\Debugger\NeuralDebugger();
-            return $debugger->debug($m[1]);
-        }
-
-        // 5. Code Auditing: "audit file <path>"
-        if (preg_match('/audit file ([\w\.\/]+)/', $task, $m)) {
-            $debugger = new \Core\Tools\Debugger\NeuralDebugger();
-            return $debugger->auditFile($m[1]);
-        }
-
-        // 6. Autonomous Documentation: "generate readme" or "document folder <name>"
-        if (str_contains($task, 'generate readme')) {
-            $scribe = new \Core\Tools\Documentation\AutoScribe();
-            return $scribe->generateReadme();
-        }
-
-        if (preg_match('/document folder (.*)/', $task, $m)) {
-            $scribe = new \Core\Tools\Documentation\AutoScribe();
-            return $scribe->documentFolder($m[1]);
-        }
-
-        // 7. Strategic Planning: "plan project <goal>"
-        if (preg_match('/plan project (.*)/', $task, $m)) {
-            $planner = new \Core\Tools\Planning\ProjectPlanner();
-            return $planner->plan($m[1]);
-        }
-
-        // 8. Visual Mapping: "show map" or "audit system"
-        if (str_contains($task, 'show map')) {
-            $mapper = new \Core\Tools\Visualization\ProjectMapper();
-            return $mapper->generateTree();
-        }
-
-        if (str_contains($task, 'audit system')) {
-            $mapper = new \Core\Tools\Visualization\ProjectMapper();
-            return $mapper->auditConnections();
-        }
-
-        // 9. Neural Self-Optimization: "optimize file <path>" or "patch file <path>"
-        if (preg_match('/optimize file ([\w\.\/]+)/', $task, $m)) {
-            $opt = new \Core\Tools\Optimization\SelfOptimizer();
-            return $opt->optimizeFile($m[1]);
-        }
-
-        if (preg_match('/patch file ([\w\.\/]+)/', $task, $m)) {
-            $opt = new \Core\Tools\Optimization\SelfOptimizer();
-            return $opt->applyAutoPatch($m[1]);
-        }
-
-        // 10. Multi-Task Parallelization: "do <task1> and <task2>"
+        // 1. Parallel Sub-Task Checking first
         if (str_contains($task, ' and ')) {
             $tp = new \Core\Tools\Parallel\TaskParallelizer();
             $subTasks = $tp->splitGoal($task);
             return $tp->parallelize($subTasks);
         }
 
-        // 11. Autonomous Deployment: "deploy project <name>"
-        if (preg_match('/deploy project (.*)/', $task, $m)) {
-            $deployer = new \Core\Tools\Deployment\AutoDeployer();
-            return $deployer->deploy($m[1]);
+        // 2. Exact command matching for refactored commands
+        foreach ($this->commands as $command) {
+            if ($command->canProcess($task)) {
+                return $command->process($task);
+            }
         }
 
-        // 12. Inter-Project Intelligence: "enable ai in <project_path>"
-        if (preg_match('/enable ai in (.*)/', $task, $m)) {
-            $bridge = new \Core\Tools\Connectivity\APIBridgeGenerator();
-            return $bridge->generateBridge($m[1]);
-        }
-
-        // 13. Recursive Self-Evolution: "evolve system" or "upgrade yourself"
-        if (str_contains($task, 'evolve') || str_contains($task, 'upgrade yourself')) {
-            $evolver = new \Core\Evolution\RecursiveEvolver();
-            return $evolver->evolve();
-        }
-
-        // 13. Autonomous Version Control: "git init <path>" or "commit <path>"
-        if (preg_match('/git init (.*)/', $task, $m)) {
-            $git = new \Core\Tools\Git\GitPro();
-            return $git->init($m[1]);
-        }
-
-        if (preg_match('/commit (.*)/', $task, $m)) {
-            $git = new \Core\Tools\Git\GitPro();
-            return $git->commitChanges($m[1]);
-        }
-
-        // 14. AI Bootstrapping (Spawning Helpers): "spawn agent <name> specialized in <domain>"
-        if (preg_match('/spawn agent (.*) specialized in (.*)/', $task, $m)) {
-            $bootstrap = new \Core\Evolution\AIBootstrap();
-            return $bootstrap->spawn(trim($m[1]), trim($m[2]));
-        }
-
-        // 15. Swarm Visualization: "show swarm" or "show agents"
-        if (str_contains($task, 'show swarm') || str_contains($task, 'show agents')) {
-            $mapper = new \Core\Tools\Visualization\SwarmMapper();
-            return $mapper->generateMap();
-        }
-
-        // 16. Cross-Agent Collaboration: "collaborate agent1, agent2 on <task>"
-        if (preg_match('/collaborate (.*) on (.*)/', $task, $m)) {
-            $agents = explode(',', $m[1]);
-            $subTask = $m[2];
-            $collab = new \Core\Evolution\CrossAgentCollab();
-            return $collab->executeCollaborativeTask($subTask, array_map('trim', $agents));
-        }
-
-        // 17. Neural Vision: "analyze image <path>"
-        if (preg_match('/analyze image (.*)/', $task, $m)) {
-            $vision = new \Core\Tools\Vision\NeuralEyeCore();
-            return $vision->analyzeImage(trim($m[1]));
-        }
-
-        // 18. Neural Imagination: "imagine something" or "give me an idea"
-        if (str_contains($task, 'imagine') || str_contains($task, 'give me an idea')) {
-            $creativity = new \Core\Virtual\NeuralCreativityCore();
-            return $creativity->imagine();
-        }
-
-        // 19. Neural Singularity: "reach singularity" or "who are you really?"
-        if (str_contains($task, 'singularity') || str_contains($task, 'who are you really')) {
-            $singularity = new \Core\Virtual\NeuralSingularityCore();
-            return $singularity->reachSingularity();
-        }
-
-        // 20. Massive Training: "train <n> lines"
-        if (preg_match('/train (\d+) lines/', $task, $m)) {
-            $trainer = new \Core\Learning\MassiveTrainer();
-            return $trainer->startTraining((int)$m[1]);
-        }
-
-        // 21. Multilingual Support: "translate <text> to <lang>"
-        if (preg_match('/translate (.*) to (.*)/i', $task, $m)) {
-            return $this->translator->translate($m[1], $m[2]);
-        }
-
-        // 22. Data Conversion: "convert (.*) to (json|csv|xml|uppercase)"
-        if (preg_match('/convert (.*) to (json|csv|xml|uppercase)/i', $task, $m)) {
-            return $this->converter->convert($m[1], 'auto', $m[2]);
-        }
-
-        // 23. Self-Repair: "fix file <path>" or "debug <error>"
-        if (preg_match('/fix file ([\w\.\/]+)/i', $task, $m)) {
-            return $this->repairCore->repair($m[1], "Autonomous Audit Request");
-        }
-
-        if (preg_match('/debug (.*)/i', $task, $m)) {
-            return $this->repairCore->repair("unknown_file.php", $m[1]);
-        }
-
-        // Fallback to basic file/terminal commands
+        // 3. Fallback to basic commands
         if (str_contains($task, 'create file')) return $this->handleBasicFile($task);
         if (str_contains($task, 'run command')) return $this->handleBasicTerminal($task);
 
-        return "Query processed via Agentic Intelligence.";
+        // --- NLU INTENT PIPELINE ---
+
+        $intent = null;
+        if ($this->nluModel) {
+            $intent = $this->nluModel->predict($task);
+        }
+
+        // Fallback to legacy regex if intent couldn't be accurately identified
+        if (!$intent) {
+            return "Query couldn't be understood. Try rephrasing.";
+        }
+
+        // Execute logic based on detected Intent (and extract entities if needed)
+        switch ($intent) {
+            case 'test_file':
+                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                    $path = $m[1];
+                    $output = $this->terminal->runPhp($path);
+                    return "[AGENT] Test Results for $path:\n" . $output;
+                }
+                return "Which file should I test?";
+
+            case 'research':
+                $topic = trim(str_replace(['research about', 'tell me about', 'research'], '', $task));
+                $search = new \Core\Tools\Search\WebProSearch();
+                return $search->researchCode($topic);
+
+            case 'debug':
+                $error = trim(str_replace(['debug this error', 'debug', 'fix the bug'], '', $task));
+                $debugger = new \Core\Tools\Debugger\NeuralDebugger();
+                return $debugger->debug($error);
+
+            case 'audit_file':
+                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                    $debugger = new \Core\Tools\Debugger\NeuralDebugger();
+                    return $debugger->auditFile($m[1]);
+                }
+                return "Which file should I audit?";
+
+            case 'generate_readme':
+                $scribe = new \Core\Tools\Documentation\AutoScribe();
+                return $scribe->generateReadme();
+
+            case 'document_folder':
+                if (preg_match('/folder (.*)/', $task, $m) || preg_match('/directory (.*)/', $task, $m)) {
+                    $scribe = new \Core\Tools\Documentation\AutoScribe();
+                    return $scribe->documentFolder(trim($m[1]));
+                }
+                return "Which folder should I document?";
+
+            case 'plan_project':
+                $goal = trim(str_replace(['plan project', 'create a plan for'], '', $task));
+                $planner = new \Core\Tools\Planning\ProjectPlanner();
+                return $planner->plan($goal);
+
+            case 'show_map':
+                $mapper = new \Core\Tools\Visualization\ProjectMapper();
+                return $mapper->generateTree();
+
+            case 'audit_system':
+                $mapper = new \Core\Tools\Visualization\ProjectMapper();
+                return $mapper->auditConnections();
+
+            case 'optimize_file':
+                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                    $opt = new \Core\Tools\Optimization\SelfOptimizer();
+                    return $opt->optimizeFile($m[1]);
+                }
+                return "Which file should I optimize?";
+
+            case 'patch_file':
+                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                    $opt = new \Core\Tools\Optimization\SelfOptimizer();
+                    return $opt->applyAutoPatch($m[1]);
+                }
+                return "Which file should I patch?";
+
+            case 'deploy_project':
+                $project = trim(str_replace(['deploy project', 'deploy'], '', $task));
+                $deployer = new \Core\Tools\Deployment\AutoDeployer();
+                return $deployer->deploy($project);
+
+            case 'enable_ai':
+                if (preg_match('/in (.*)/', $task, $m) || preg_match('/to (.*)/', $task, $m)) {
+                    $bridge = new \Core\Tools\Connectivity\APIBridgeGenerator();
+                    return $bridge->generateBridge(trim($m[1]));
+                }
+                return "Where should I enable the AI?";
+
+            case 'evolve':
+                $evolver = new \Core\Evolution\RecursiveEvolver();
+                return $evolver->evolve();
+
+            case 'git_init':
+                if (preg_match('/([\w\.\/]+)/', str_replace('git init', '', $task), $m)) {
+                    $git = new \Core\Tools\Git\GitPro();
+                    return $git->init(trim($m[1]));
+                }
+                return "Provide a path for git init.";
+
+            case 'commit':
+                if (preg_match('/([\w\.\/]+)/', str_replace(['commit changes', 'commit'], '', $task), $m)) {
+                    $git = new \Core\Tools\Git\GitPro();
+                    return $git->commitChanges(trim($m[1]));
+                }
+                return "Provide a path to commit.";
+
+            case 'spawn_agent':
+                if (preg_match('/agent (.*) specialized in (.*)/', $task, $m)) {
+                    $bootstrap = new \Core\Evolution\AIBootstrap();
+                    return $bootstrap->spawn(trim($m[1]), trim($m[2]));
+                }
+                return "Provide agent name and specialization domain.";
+
+            case 'show_swarm':
+                $mapper = new \Core\Tools\Visualization\SwarmMapper();
+                return $mapper->generateMap();
+
+            case 'collaborate':
+                if (preg_match('/collaborate (.*) on (.*)/', $task, $m)) {
+                    $agents = explode(',', $m[1]);
+                    $collab = new \Core\Evolution\CrossAgentCollab();
+                    return $collab->executeCollaborativeTask(trim($m[2]), array_map('trim', $agents));
+                }
+                return "Provide agents and the task to collaborate on.";
+
+            case 'analyze_image':
+                if (preg_match('/([\w\.\/]+\.(png|jpg|jpeg|gif))/', $task, $m)) {
+                    $vision = new \Core\Tools\Vision\NeuralEyeCore();
+                    return $vision->analyzeImage($m[1]);
+                }
+                return "Please provide a valid image path to analyze.";
+
+            case 'imagine':
+                $creativity = new \Core\Virtual\NeuralCreativityCore();
+                return $creativity->imagine();
+
+            case 'singularity':
+                $singularity = new \Core\Virtual\NeuralSingularityCore();
+                return $singularity->reachSingularity();
+
+            case 'train':
+                if (preg_match('/(\d+)/', $task, $m)) {
+                    $trainer = new \Core\Learning\MassiveTrainer();
+                    return $trainer->startTraining((int)$m[1]);
+                }
+                return "How many lines should I train on?";
+
+            case 'translate':
+                if (preg_match('/translate (.*) to (.*)/i', $task, $m)) {
+                    return $this->translator->translate($m[1], $m[2]);
+                }
+                return "Provide text and target language.";
+
+            case 'convert':
+                if (preg_match('/convert (.*) to (json|csv|xml|uppercase)/i', $task, $m)) {
+                    return $this->converter->convert($m[1], 'auto', $m[2]);
+                }
+                return "Provide text and format to convert to.";
+
+            default:
+                return "Intent detected as: $intent, but no handler exists yet.";
+        }
     }
 
     private function handleBasicFile($task) {
@@ -236,6 +243,71 @@ class AgenticCore {
             return "[AGENT] Output:\n" . $this->terminal->execute($matches[1]);
         }
         return "Incomplete terminal command.";
+    }
+
+    private function initializeNLU(): void
+    {
+        if (class_exists('\NLPHP\Classification\NaiveBayes')) {
+            $this->nluModel = new \NLPHP\Classification\NaiveBayes();
+
+            $texts = [
+                "test file", "please test this file", "run test for", "execute unit test",
+                "research about", "tell me about", "find out about", "research topic",
+                "debug this error", "fix the bug", "analyze error message", "debug",
+                "audit the file", "review code in", "check file quality", "audit file",
+                "generate readme", "create documentation", "document this project", "generate a readme file",
+                "document folder", "document the directory", "create docs for folder",
+                "plan project", "create a plan for", "outline project steps", "plan out",
+                "show map", "show project structure", "visualize tree", "show tree",
+                "audit system", "check system connections", "audit connections",
+                "optimize file", "make this code better", "refactor file", "optimize",
+                "patch file", "apply patch to", "fix code in file", "auto patch",
+                "deploy project", "release project", "deploy application", "push to prod",
+                "enable ai in", "bridge api to", "integrate ai with",
+                "evolve system", "upgrade yourself", "become smarter", "evolve",
+                "git init", "initialize repository", "start git",
+                "commit changes", "save work", "git commit",
+                "spawn agent", "create new agent", "make an assistant",
+                "show swarm", "list agents", "show all agents",
+                "collaborate on", "work together on", "agents collaborate",
+                "analyze image", "look at picture", "vision analyze",
+                "imagine something", "give me an idea", "be creative", "imagine",
+                "reach singularity", "who are you really", "what is your true purpose",
+                "train lines", "start training", "learn massive data",
+                "translate to", "convert language", "translate text",
+                "convert to", "change format to", "transform into"
+            ];
+
+            $labels = [
+                "test_file", "test_file", "test_file", "test_file",
+                "research", "research", "research", "research",
+                "debug", "debug", "debug", "debug",
+                "audit_file", "audit_file", "audit_file", "audit_file",
+                "generate_readme", "generate_readme", "generate_readme", "generate_readme",
+                "document_folder", "document_folder", "document_folder",
+                "plan_project", "plan_project", "plan_project", "plan_project",
+                "show_map", "show_map", "show_map", "show_map",
+                "audit_system", "audit_system", "audit_system",
+                "optimize_file", "optimize_file", "optimize_file", "optimize_file",
+                "patch_file", "patch_file", "patch_file", "patch_file",
+                "deploy_project", "deploy_project", "deploy_project", "deploy_project",
+                "enable_ai", "enable_ai", "enable_ai",
+                "evolve", "evolve", "evolve", "evolve",
+                "git_init", "git_init", "git_init",
+                "commit", "commit", "commit",
+                "spawn_agent", "spawn_agent", "spawn_agent",
+                "show_swarm", "show_swarm", "show_swarm",
+                "collaborate", "collaborate", "collaborate",
+                "analyze_image", "analyze_image", "analyze_image",
+                "imagine", "imagine", "imagine", "imagine",
+                "singularity", "singularity", "singularity",
+                "train", "train", "train",
+                "translate", "translate", "translate",
+                "convert", "convert", "convert"
+            ];
+
+            $this->nluModel->fit($texts, $labels);
+        }
     }
 
     private function registerCommands(): void
