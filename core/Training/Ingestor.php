@@ -284,6 +284,75 @@ class Ingestor {
     }
 
     /**
+     * Ingest PHP Code Large dataset from JSONL (URL or local file)
+     * Dataset format: {"code": "...", "language": "PHP"}
+     */
+    public function ingestPHPCodeLarge(string $sourcePath, int $maxLines = 1000): array {
+        $this->log("[PHPCode] Starting ingestion from: $sourcePath");
+
+        $handle = fopen($sourcePath, "r");
+        if (!$handle) {
+            $this->log("[PHPCode] Cannot open source: $sourcePath");
+            return ['status' => 'error', 'message' => "Cannot open source: $sourcePath"];
+        }
+
+        $count = 0;
+        $absorbed = 0;
+        $data = [];
+        $shards = 0;
+        $samples = [];
+
+        while (($line = fgets($handle)) !== false && $count < $maxLines) {
+            $json = json_decode($line, true);
+            if ($json && isset($json['code'])) {
+                $code = $json['code'];
+
+                // We format the data as Q&A for the knowledge base
+                // Since this is just code snippets, we can use a generic question or use part of the code as question
+                $snippet = mb_substr($code, 0, 100);
+                $entry = [
+                    'q' => "PHP Code Snippet " . ($count + 1),
+                    'a' => $code
+                ];
+                $data[] = $entry;
+                $absorbed++;
+
+                // Collect first 5 samples for live display
+                if (count($samples) < 5) {
+                    $samples[] = "[PHPCode] " . str_replace(["\r", "\n"], " ", mb_substr($code, 0, 60)) . "...";
+                }
+            }
+            $count++;
+
+            if (count($data) >= 100) {
+                $this->saveShard('php_code', $data, ++$shards);
+                $this->log("[PHPCode] Shard {$shards} saved ({$absorbed} snippets)");
+                $data = [];
+            }
+        }
+        fclose($handle);
+
+        if (!empty($data)) {
+            $this->saveShard('php_code', $data, ++$shards);
+            $this->log("[PHPCode] Final shard {$shards} saved");
+        }
+
+        // Build BM25 index
+        if ($shards > 0) {
+            $this->buildIndex('php_code');
+        }
+
+        $this->log("[PHPCode] Complete: {$absorbed} snippets from {$count} lines, {$shards} shards");
+        return [
+            'status' => 'success',
+            'lines_read' => $count,
+            'absorbed' => $absorbed,
+            'shards' => $shards,
+            'samples' => $samples
+        ];
+    }
+
+    /**
      * Build a BM25 search index from saved shards
      */
     private function buildIndex(string $category) {
