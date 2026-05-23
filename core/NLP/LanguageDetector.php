@@ -7,9 +7,13 @@ namespace Core\NLP;
  */
 class LanguageDetector {
     
+    // Hash map for O(1) lookups instead of in_array
     private array $hiMarkers = [
-        'hai', 'tha', 'thi', 'the', 'ka', 'ki', 'main', 'nahi', 'nhi', 'kyun', 'kya', 
-        'karo', 'kar', 'raha', 'rahi', 'kuch', 'bhi', 'se', 'ya', 'par', 'per', 'kaise', 'btao'
+        'hai' => true, 'tha' => true, 'thi' => true, 'the' => true, 'ka' => true,
+        'ki' => true, 'main' => true, 'nahi' => true, 'nhi' => true, 'kyun' => true,
+        'kya' => true, 'karo' => true, 'kar' => true, 'raha' => true, 'rahi' => true,
+        'kuch' => true, 'bhi' => true, 'se' => true, 'ya' => true, 'par' => true,
+        'per' => true, 'kaise' => true, 'btao' => true
     ];
 
     /**
@@ -33,7 +37,7 @@ class LanguageDetector {
         $words = explode(' ', strtolower($text));
         $hiCount = 0;
         foreach ($words as $word) {
-            if (in_array($word, $this->hiMarkers)) $hiCount++;
+            if (isset($this->hiMarkers[$word])) $hiCount++;
         }
 
         if ($hiCount >= 1) return 'hi_latin';
