@@ -18,6 +18,15 @@ class GenerativeAIAssistant {
         $this->markov = new MarkovGenerator();
         $this->transformer = new Transformers();
         
+        // Bootstrapping the Neural Brain with the Corpus
+        $corpusPath = __DIR__ . '/neural_corpus.txt';
+        if (file_exists($corpusPath)) {
+            $lines = file($corpusPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $this->markov->learn($line);
+            }
+        }
+
         // ResponseQualityGuard is outside, so we use its full namespace
         $guard = new \Core\Response\ResponseQualityGuard();
         
