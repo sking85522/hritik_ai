@@ -45,7 +45,14 @@ class SentimentAnalyzer
         $words = preg_split('/\s+/', strtolower(trim($text)));
         $score = 0.0;
         $wordCount = 0;
-        $negators = ['not', 'never', 'no', "don't", "doesn't", "isn't", "wasn't", "weren't", "couldn't", "wouldn't"];
+
+        // Hash map for O(1) lookups instead of in_array
+        $negators = [
+            'not' => true, 'never' => true, 'no' => true, "don't" => true,
+            "doesn't" => true, "isn't" => true, "wasn't" => true,
+            "weren't" => true, "couldn't" => true, "wouldn't" => true
+        ];
+
         $intensifiers = ['very' => 1.5, 'really' => 1.5, 'extremely' => 2.0, 'absolutely' => 2.0, 'totally' => 1.5, 'so' => 1.3];
 
         $isNegated = false;
@@ -55,7 +62,7 @@ class SentimentAnalyzer
             $word = preg_replace('/[^a-z\']/', '', $word);
             if (empty($word)) continue;
 
-            if (in_array($word, $negators)) {
+            if (isset($negators[$word])) {
                 $isNegated = true;
                 continue;
             }
