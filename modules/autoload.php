@@ -25,6 +25,7 @@ spl_autoload_register(function ($className) {
         'QuantizationPHP\QuantizationPHP' => 'quantizationphp/QuantizationPHP.php',
         'LoRAPHP\LoRAPHP' => 'loraphp/LoRAPHP.php',
         'EvalPHP\EvalPHP' => 'evalphp/EvalPHP.php',
+        'torch'           => 'phptorch/PHPTorch.php',
     ];
 
     if (isset($classMap[$className])) {
