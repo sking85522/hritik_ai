@@ -17,6 +17,14 @@ spl_autoload_register(function ($className) {
         'PandaPHP\DataFrame'   => 'pandaphp/src/DataFrame.php',
         'DatasetPHP\DatasetPHP' => 'datasetphp/DatasetPHP.php',
         'SearchPHP\SearchPHP'  => 'search/SearchPHP.php',
+        'TokenizerPHP\TokenizerPHP' => 'tokenizerphp/TokenizerPHP.php',
+        'TransformersPHP\TransformersPHP' => 'transformersphp/TransformersPHP.php',
+        'AutogradPHP\AutogradPHP' => 'autogradphp/AutogradPHP.php',
+        'OptimizersPHP\OptimizersPHP' => 'optimizersphp/OptimizersPHP.php',
+        'DatasetsPHP\DatasetsPHP' => 'datasetsphp/DatasetsPHP.php',
+        'QuantizationPHP\QuantizationPHP' => 'quantizationphp/QuantizationPHP.php',
+        'LoRAPHP\LoRAPHP' => 'loraphp/LoRAPHP.php',
+        'EvalPHP\EvalPHP' => 'evalphp/EvalPHP.php',
     ];
 
     if (isset($classMap[$className])) {
