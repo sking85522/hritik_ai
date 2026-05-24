@@ -8,15 +8,26 @@ namespace Core\NLP\Cleaning;
 class AutoSpeller {
     
     private static array $spellingCache = [];
+    private static array $compiledPatterns = [];
+    private static array $compiledReplacements = [];
 
     /**
      * Corrects spelling variations in the input text.
      */
     public function correct(string $text): string {
         $corrections = $this->getCorrections();
-        foreach ($corrections as $wrong => $right) {
-            $text = preg_replace('/\b' . $wrong . '\b/i', $right, $text);
+
+        if (empty(self::$compiledPatterns) && !empty($corrections)) {
+            foreach ($corrections as $wrong => $right) {
+                self::$compiledPatterns[] = '/\b' . preg_quote($wrong, '/') . '\b/i';
+                self::$compiledReplacements[] = $right;
+            }
         }
+
+        if (!empty(self::$compiledPatterns)) {
+            $text = preg_replace(self::$compiledPatterns, self::$compiledReplacements, $text);
+        }
+
         return $text;
     }
 
