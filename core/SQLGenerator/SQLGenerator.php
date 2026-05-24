@@ -40,7 +40,7 @@ class SQLGenerator {
         $where = !empty($conditions) ? implode(' OR ', $conditions) : "(k_key LIKE '%" . addslashes($query) . "%')";
         
         return "SELECT k_key, k_value, category FROM neural_knowledge " .
-               "WHERE $where AND category != 'intent' " .
+               "WHERE $where AND category != 'intent' AND category != 'system_models' " .
                "ORDER BY (CASE WHEN k_key LIKE '%" . addslashes($query) . "%' THEN 0 ELSE 1 END) ASC LIMIT 5";
     }
 

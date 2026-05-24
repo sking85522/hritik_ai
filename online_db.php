@@ -64,8 +64,10 @@ class HritikLocalDB {
         if (preg_match("/category\s*=\s*'([^']+)'/i", $sql, $m)) {
             $rows = array_values(array_filter($rows, fn($row) => (string)($row['category'] ?? '') === $m[1]));
         }
-        if (preg_match("/category\s*!=\s*'([^']+)'/i", $sql, $m)) {
-            $rows = array_values(array_filter($rows, fn($row) => (string)($row['category'] ?? '') !== $m[1]));
+        if (preg_match_all("/category\s*!=\s*'([^']+)'/i", $sql, $matches)) {
+            foreach ($matches[1] as $excludedCategory) {
+                $rows = array_values(array_filter($rows, fn($row) => (string)($row['category'] ?? '') !== $excludedCategory));
+            }
         }
 
         $queryNeedles = $this->likeNeedles($sql);
