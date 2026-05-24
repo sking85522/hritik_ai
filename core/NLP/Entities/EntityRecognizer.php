@@ -33,7 +33,9 @@ class EntityRecognizer {
     private function getPatterns(): array {
         if (!empty(self::$entityCache)) return self::$entityCache;
 
-        require_once __DIR__ . '/../../../online_db.php';
+        if (file_exists(__DIR__ . '/../../../online_db.php')) {
+            require_once __DIR__ . '/../../../online_db.php';
+        }
         global $db;
         
         if (!isset($db) || $db === null) return [];

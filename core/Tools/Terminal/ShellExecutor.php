@@ -17,7 +17,16 @@ class ShellExecutor {
         }
 
         $output = shell_exec($command . ' 2>&1');
-        return trim((string)$output);
+        $outputStr = trim((string)$output);
+
+        // Self-Healing Auto-Recovery
+        if (stripos($outputStr, 'Fatal error:') !== false || stripos($outputStr, 'Parse error:') !== false || stripos($outputStr, 'not found') !== false) {
+            $debugger = new \Core\Tools\Debugger\NeuralDebugger();
+            $debugResponse = $debugger->debug($outputStr);
+            $outputStr .= "\n\n[AUTO-RECOVERY SYSTEM TRIGGERED]\n" . $debugResponse;
+        }
+
+        return $outputStr;
     }
 
     public function runPhp(string $path): string {
