@@ -11,6 +11,9 @@ class IntentMapper {
     /** @var array Shared cache for intent patterns */
     private static array $intentCache = [];
 
+    /** @var array Shared cache for compiled regex patterns */
+    private static array $compiledRegexCache = [];
+
     /**
      * Maps a prompt to the most likely intent based on neural patterns.
      * 
@@ -20,14 +23,19 @@ class IntentMapper {
     public function map(string $text): string {
         $intents = $this->getIntents();
         
-        foreach ($intents as $intentName => $patterns) {
-            foreach ($patterns as $pattern) {
-                // Using word boundaries for better accuracy
-                $regex = '/\b' . preg_quote($pattern, '/') . '\b/i';
-                if (preg_match($regex, $text)) return $intentName;
+        if (empty(self::$compiledRegexCache)) {
+            foreach ($intents as $intentName => $patterns) {
+                if (empty($patterns)) continue;
+                // Pre-compile into a single optimized regex with alternation
+                $escapedPatterns = array_map(function($p) { return preg_quote($p, '/'); }, $patterns);
+                self::$compiledRegexCache[$intentName] = '/\b(' . implode('|', $escapedPatterns) . ')\b/i';
             }
         }
         
+        foreach (self::$compiledRegexCache as $intentName => $regex) {
+            if (preg_match($regex, $text)) return $intentName;
+        }
+
         return 'general_chat';
     }
 
