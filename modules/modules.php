@@ -20,4 +20,5 @@ return [
     'quantizationphp',
     'loraphp',
     'evalphp',
+    'phptorch',
 ];
