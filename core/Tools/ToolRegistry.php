@@ -12,6 +12,8 @@ class ToolRegistry {
         $this->register('execute_command', new ExecuteCommandTool());
         $this->register('learn_fact', new LearnFactTool());
         $this->register('analyze_topology', new AnalyzeTopologyTool());
+        $this->register('debug', new DebuggerTool());
+        $this->register('data_analyze', new DataAnalyzerTool());
     }
 
     public function register(string $name, ToolInterface $tool): void {

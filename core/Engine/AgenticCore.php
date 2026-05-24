@@ -78,6 +78,17 @@ class AgenticCore {
         }
 
         // Execute logic based on detected Intent (and extract entities if needed)
+
+        // Dynamic Tool Execution
+        $toolRegistry = new \Core\Tools\ToolRegistry();
+        $tool = $toolRegistry->getTool($intent);
+        if ($tool !== null) {
+            $result = $tool->execute(['task' => $task, 'intent' => $intent]);
+            if (isset($result['response'])) {
+                return $result['response'];
+            }
+        }
+
         switch ($intent) {
             case 'test_file':
                 if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
@@ -91,11 +102,6 @@ class AgenticCore {
                 $topic = trim(str_replace(['research about', 'tell me about', 'research'], '', $task));
                 $search = new \Core\Tools\Search\WebProSearch();
                 return $search->researchCode($topic);
-
-            case 'debug':
-                $error = trim(str_replace(['debug this error', 'debug', 'fix the bug'], '', $task));
-                $debugger = new \Core\Tools\Debugger\NeuralDebugger();
-                return $debugger->debug($error);
 
             case 'audit_file':
                 if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
@@ -281,6 +287,7 @@ class AgenticCore {
                 "train lines", "start training", "learn massive data",
                 "translate to", "convert language", "translate text",
                 "convert to", "change format to", "transform into",
+                "analyze this data", "describe csv", "analyze dataset",
                 "tell me a joke", "talk to me", "write a story", "what do you think", "say something"
             ];
 
@@ -310,6 +317,7 @@ class AgenticCore {
                 "train", "train", "train",
                 "translate", "translate", "translate",
                 "convert", "convert", "convert",
+                "data_analyze", "data_analyze", "data_analyze",
                 "generate_thought", "generate_thought", "generate_thought", "generate_thought", "generate_thought"
             ];
 

@@ -17,7 +17,10 @@ class NeuralSafetyGuard {
         '/\bgit\s+reset\s+--hard\b/i',
         '/\bgit\s+clean\s+-fd\b/i',
         '/\bRemove-Item\b.*\s-Recurse\b/i',
-        '/\bSet-ExecutionPolicy\b/i'
+        '/\bSet-ExecutionPolicy\b/i',
+        '/\bwget\b/i',
+        '/\bcurl\b/i',
+        '/\b(?:bash|sh)\s*$/i'
     ];
 
     public function isCommandSafe(string $command): bool {

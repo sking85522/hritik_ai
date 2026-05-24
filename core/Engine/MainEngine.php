@@ -145,6 +145,10 @@ class MainEngine {
         }
 
         $this->history[] = ['prompt' => $prompt, 'response' => $response];
+        // Rolling Context Window: Keep only the 10 most recent interactions to prevent memory overload
+        if (count($this->history) > 10) {
+            array_shift($this->history);
+        }
         
         // Log to History via SQL Gen
         $logSql = $this->sqlGen->generate('save_history', [
