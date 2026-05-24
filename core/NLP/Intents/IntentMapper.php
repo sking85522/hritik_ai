@@ -14,6 +14,8 @@ class IntentMapper {
     /** @var array Shared cache for compiled regex patterns */
     private static array $compiledRegexCache = [];
 
+    private static ?TrainableIntentClassifier $trainedClassifier = null;
+
     /**
      * Maps a prompt to the most likely intent based on neural patterns.
      * 
@@ -34,6 +36,14 @@ class IntentMapper {
         
         foreach (self::$compiledRegexCache as $intentName => $regex) {
             if (preg_match($regex, $text)) return $intentName;
+        }
+
+        $trained = $this->getTrainedClassifier();
+        if ($trained) {
+            $prediction = $trained->predict($text);
+            if (($prediction['intent'] ?? 'unknown') !== 'unknown') {
+                return (string)$prediction['intent'];
+            }
         }
 
         return 'general_chat';
@@ -71,5 +81,14 @@ class IntentMapper {
         }
 
         return self::$intentCache;
+    }
+
+    private function getTrainedClassifier(): ?TrainableIntentClassifier {
+        if (self::$trainedClassifier instanceof TrainableIntentClassifier) {
+            return self::$trainedClassifier;
+        }
+
+        self::$trainedClassifier = TrainableIntentClassifier::load();
+        return self::$trainedClassifier;
     }
 }

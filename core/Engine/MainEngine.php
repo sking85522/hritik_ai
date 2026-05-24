@@ -61,6 +61,14 @@ class MainEngine {
             $source = 'built_in_conversation';
         }
 
+        if (!$response) {
+            $routed = $this->routeByIntent($intent, $prompt);
+            if ($routed !== null) {
+                $response = $routed;
+                $source = 'intent_router';
+            }
+        }
+
         // 0. Permanent Memory Recall (Personal Context)
         $personalContext = $this->personalMemory->recall($prompt);
         if ($personalContext) {
@@ -203,5 +211,30 @@ class MainEngine {
         }
 
         return null;
+    }
+
+    private function routeByIntent(string $intent, string $prompt): ?string {
+        switch ($intent) {
+            case 'training':
+                return "Training ke liye pehle dataset import/train karo:\n" .
+                    "1. H:\\xampp\\php\\php.exe datasetrun.php --file=hinglish_conversations.csv\n" .
+                    "2. H:\\xampp\\php\\php.exe train_intents.php --file=storage/datasets/hinglish_intents.csv --epochs=3\n" .
+                    "3. H:\\xampp\\php\\php.exe scanandlearn.php --path=H:\\xampp\\htdocs\\hritik_ai --limit=500";
+
+            case 'tool_use':
+                if (preg_match('/(map|tree|structure|project)/i', $prompt)) {
+                    return $this->agenticCore->solve('show map');
+                }
+                return "Tool command samajh gaya. Aap specific bolo: `show map`, `run command ...`, `create file ...`, ya `scanandlearn.php` run karo.";
+
+            case 'coding':
+                if (preg_match('/(debug|error|fix|audit|check|console\.php|api\.php)/i', $prompt)) {
+                    return "Coding task detect hua. Specific file/error bhejo, example: `audit file console.php` ya exact error paste karo.";
+                }
+                return null;
+
+            default:
+                return null;
+        }
     }
 }

@@ -241,7 +241,7 @@ class HritikRemoteDB {
                 'Content-Type: application/x-www-form-urlencoded',
             ],
             CURLOPT_TIMEOUT => $this->timeout,
-            CURLOPT_CONNECTTIMEOUT => min(8, $this->timeout),
+            CURLOPT_CONNECTTIMEOUT => min(3, $this->timeout),
             CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
             CURLOPT_SSL_VERIFYPEER => $this->verifySsl,
             CURLOPT_SSL_VERIFYHOST => $this->verifySsl ? 2 : 0,
@@ -307,9 +307,10 @@ class HritikRemoteDB {
 $remoteUrl = getenv('HRITIK_REMOTE_DB_URL') ?: 'https://databasehritikai.techelevatex.us.cc/api.php';
 $remoteKey = getenv('HRITIK_REMOTE_DB_KEY') ?: 'SACHIN_SECURE_V1_2026';
 $verifySsl = getenv('HRITIK_REMOTE_DB_SSL_VERIFY') === '1';
+$dbMode = strtolower((string)(getenv('HRITIK_DB_MODE') ?: 'remote'));
 
 if (!isset($db)) {
-    $db = ($remoteUrl !== '' && $remoteKey !== '')
-        ? new HritikRemoteDB($remoteUrl, $remoteKey, null, 15, $verifySsl)
+    $db = ($dbMode !== 'local' && $remoteUrl !== '' && $remoteKey !== '')
+        ? new HritikRemoteDB($remoteUrl, $remoteKey, null, 8, $verifySsl)
         : new HritikLocalDB();
 }
