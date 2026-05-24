@@ -12,4 +12,12 @@ return [
     'datasetphp',
     'search',
     'qr-decoder',
+    'tokenizerphp',
+    'transformersphp',
+    'autogradphp',
+    'optimizersphp',
+    'datasetsphp',
+    'quantizationphp',
+    'loraphp',
+    'evalphp',
 ];
