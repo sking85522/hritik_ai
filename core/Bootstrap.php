@@ -29,6 +29,27 @@ spl_autoload_register(function ($class) {
         'DatasetPHP\\' => 'datasetphp/src/',
     ];
 
+    $singleFileModules = [
+        'TokenizerPHP\\'    => 'tokenizerphp/TokenizerPHP.php',
+        'TransformersPHP\\' => 'transformersphp/TransformersPHP.php',
+        'AutogradPHP\\'     => 'autogradphp/AutogradPHP.php',
+        'OptimizersPHP\\'   => 'optimizersphp/OptimizersPHP.php',
+        'DatasetsPHP\\'     => 'datasetsphp/DatasetsPHP.php',
+        'QuantizationPHP\\' => 'quantizationphp/QuantizationPHP.php',
+        'LoRAPHP\\'         => 'loraphp/LoRAPHP.php',
+        'EvalPHP\\'         => 'evalphp/EvalPHP.php',
+    ];
+
+    foreach ($singleFileModules as $prefix => $path) {
+        if (strpos($class, $prefix) === 0) {
+            $file = $moduleDir . $path;
+            if (file_exists($file)) {
+                require_once $file;
+                return;
+            }
+        }
+    }
+
     foreach ($mappings as $prefix => $path) {
         if (strpos($class, $prefix) === 0) {
             $relativeClass = str_replace($prefix, '', $class);
