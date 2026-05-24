@@ -80,8 +80,15 @@ class MainEngine {
         if (!$response && $sql) {
             $dbRes = $this->queryDB($sql);
             if (!empty($dbRes)) {
-                $response = $dbRes[0]['k_value'];
-                $source = 'dynamic_sql_knowledge';
+                $potentialResponse = $dbRes[0]['k_value'];
+                // Safeguard against raw code dumping on conversational queries
+                $isCode = str_contains($potentialResponse, '<?php') || str_contains($potentialResponse, 'namespace ');
+                $askedForCode = preg_match('/(code|script|file|function|class)/i', $prompt);
+                
+                if (!$isCode || $askedForCode) {
+                    $response = $potentialResponse;
+                    $source = 'dynamic_sql_knowledge';
+                }
             }
         }
 
@@ -205,6 +212,10 @@ class MainEngine {
         if (preg_match('/(tumhara naam|tera naam|who are you|kaun ho|kaun hai tu|hritik ai)/i', $text)) {
             return "Main Hritik AI hoon, aapka local PHP assistant. Main project files, commands, debugging aur coding tasks mein help kar sakta hoon.";
         }
+        
+        if (preg_match('/^(php kya h|what is php)/i', $text)) {
+            return "PHP (Hypertext Preprocessor) ek popular open-source server-side scripting language hai jo mukhya roop se web development ke liye use hoti hai.";
+        }
 
         if (preg_match('/(bye|goodbye|alvida|shukria|thank you|thanks)$/i', $text)) {
             return "Alvida bhai! Jab bhi zarurat ho, main yahin hoon.";
@@ -214,6 +225,15 @@ class MainEngine {
     }
 
     private function routeByIntent(string $intent, string $prompt): ?string {
+        $text = strtolower(trim($prompt));
+
+        // Direct keywords routing to AgenticCore to enable Command Pattern
+        if (preg_match('/^(calculate|solve|calc|run command|execute command|create file|show map|show tree|project structure|debug|fix the bug|audit file|audit code)/i', $text) ||
+            preg_match('/^[0-9+\-*\/^().\s]+$/', $text) ||
+            preg_match('/[0-9]+\s*[\+\-\*\/^]\s*[0-9]+/', $text)) {
+            return $this->agenticCore->solve($prompt);
+        }
+
         switch ($intent) {
             case 'training':
                 return "Training ke liye pehle dataset import/train karo:\n" .
@@ -222,14 +242,13 @@ class MainEngine {
                     "3. H:\\xampp\\php\\php.exe scanandlearn.php --path=H:\\xampp\\htdocs\\hritik_ai --limit=500";
 
             case 'tool_use':
-                if (preg_match('/(map|tree|structure|project)/i', $prompt)) {
-                    return $this->agenticCore->solve('show map');
-                }
-                return "Tool command samajh gaya. Aap specific bolo: `show map`, `run command ...`, `create file ...`, ya `scanandlearn.php` run karo.";
+            case 'generate_code':
+                return $this->agenticCore->solve($prompt);
 
             case 'coding':
-                if (preg_match('/(debug|error|fix|audit|check|console\.php|api\.php)/i', $prompt)) {
-                    return "Coding task detect hua. Specific file/error bhejo, example: `audit file console.php` ya exact error paste karo.";
+                // Check if it's a specific debug or audit command, otherwise solve via AgenticCore
+                if (preg_match('/(debug|error|fix|audit|check|generate|write)/i', $prompt)) {
+                    return $this->agenticCore->solve($prompt);
                 }
                 return null;
 

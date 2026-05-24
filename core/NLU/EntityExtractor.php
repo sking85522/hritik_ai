@@ -25,8 +25,20 @@ class EntityExtractor {
                 'language'   => $this->extractProgrammingLanguage($text),
                 'structures' => $this->extractCodingStructures($text),
                 'variables'  => $this->extractVariables($text)
-            ]
+            ],
+            'files'      => $this->extractFilePaths($text)
         ];
+    }
+
+    /**
+     * Attempts to extract file paths from text
+     */
+    public function extractFilePaths(string $text): array {
+        $paths = [];
+        if (preg_match_all('/([\w\.\/\\\\]+\.\w+)/', $text, $matches)) {
+            $paths = array_merge($paths, $matches[1]);
+        }
+        return array_values(array_unique($paths));
     }
 
     /**

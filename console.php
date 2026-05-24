@@ -50,10 +50,8 @@ while (true) {
         break;
     }
 
-    // Thinking Simulation
-    echo $cyan . " Hritik AI: " . $gray . "[Environment Scan...] " . $reset;
-    usleep(200000);
-    echo "\r" . $cyan . " Hritik AI: " . $gray . "[Neural Thinking...] " . $reset;
+    // Thinking Execution
+    echo $cyan . " Hritik AI: " . $gray . "[Processing Query...] " . $reset;
 
     $result = $engine->processPrompt($prompt, 'default', null, null);
     
@@ -62,10 +60,8 @@ while (true) {
 
     if ($source === 'online_search_api') {
         echo "\r" . $cyan . " Hritik AI: " . $gray . "[Web Data Retrieval...] " . $reset;
-        usleep(300000);
     } elseif ($source === 'neural_local_teacher' || $source === 'forced_neural_generation') {
         echo "\r" . $cyan . " Hritik AI: " . $gray . "[Deep Neural Reasoning...] " . $reset;
-        usleep(400000);
     }
 
     // Final Output

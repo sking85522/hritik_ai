@@ -22,13 +22,16 @@ class PersonalMemoryBridge {
         global $db;
         if (!$db) return;
 
-        // Detect personal facts using heuristics
-        if (preg_match('/(mera naam|i am|i live in|mujhe .* pasand hai|my name is)/i', $prompt)) {
-            $safeFact = addslashes($fact);
-            $safePrompt = addslashes($prompt);
-            $sql = "INSERT INTO neural_knowledge (category, sub_category, k_key, k_value) " .
-                   "VALUES ('user_profile', 'permanent_memory', '$safePrompt', '$safeFact')";
-            $db->query($sql);
+        // Detect personal facts or future promises using broader heuristics
+        if (preg_match('/(mera naam|i am|i live in|mujhe .* pasand hai|my name is|is|hai|hota|hoga|rahega|aage main|tum yaad rakhna|meri jankari|tumse swal puchuga|yaad rakh)/i', $prompt)) {
+            // Also exclude questions to avoid saving "tumhara naam kya hai" as a fact
+            if (!preg_match('/\?|kya|kyun|kaise|how|why|what|when|kaha|kidhar/i', $prompt)) {
+                $safeFact = addslashes($fact);
+                $safePrompt = addslashes($prompt);
+                $sql = "INSERT INTO neural_knowledge (category, sub_category, k_key, k_value) " .
+                       "VALUES ('user_profile', 'permanent_memory', '$safePrompt', '$safeFact')";
+                $db->query($sql);
+            }
         }
     }
 

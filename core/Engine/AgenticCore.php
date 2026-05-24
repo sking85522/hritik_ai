@@ -3,12 +3,19 @@ namespace Core\Engine;
 
 use Core\Commands\CommandInterface;
 use Core\Commands\CreateProjectCommand;
+use Core\Commands\ShowMapCommand;
+use Core\Commands\CalculateCommand;
+use Core\Commands\RunCommandCommand;
+use Core\Commands\DebugCommand;
+use Core\Commands\AuditFileCommand;
 use Core\Tools\FileSystem\FileEditor;
 use Core\Tools\Terminal\ShellExecutor;
+use Core\NLU\PersonalBrain;
+use Core\NLU\EntityExtractor;
 
 /**
  * HRITIK AI - ADVANCED AGENTIC CORE (PROJECT MANAGER)
- * This class is being refactored to use the Command Pattern.
+ * This class uses a Personal ML Brain instead of Regex.
  */
 class AgenticCore {
     
@@ -23,11 +30,14 @@ class AgenticCore {
     /** @var CommandInterface[] */
     private array $commands = [];
 
-    private $nluModel;
+    private PersonalBrain $personalBrain;
+    private EntityExtractor $extractor;
 
     public function __construct()
     {
-        $this->initializeNLU();
+        $this->personalBrain = new PersonalBrain();
+        $this->extractor = new EntityExtractor();
+        
         $this->fileSystem = new FileEditor();
         $this->terminal = new ShellExecutor();
         $this->safetyGuard = new \Core\Tools\Safety\NeuralSafetyGuard();
@@ -61,52 +71,62 @@ class AgenticCore {
             }
         }
 
-        // 3. Fallback to basic commands
-        if (str_contains($task, 'create file')) return $this->handleBasicFile($task);
-        if (str_contains($task, 'run command')) return $this->handleBasicTerminal($task);
-
-        // --- NLU INTENT PIPELINE ---
-
-        $intent = null;
-        if ($this->nluModel) {
-            $intent = $this->nluModel->predict($task);
-        }
-
-        // Fallback to Generative Thinking if intent couldn't be accurately identified
-        if (!$intent) {
-            return $this->generativeAI->generateThought($task);
-        }
-
-        // Execute logic based on detected Intent (and extract entities if needed)
+        // --- NLU INTENT PIPELINE (Machine Learning) ---
+        $intent = $this->personalBrain->predictIntent($task);
+        $entities = $this->extractor->extract($task);
+        
+        // Extract primary file or generic topic dynamically without regex
+        $primaryFile = !empty($entities['files']) ? $entities['files'][0] : null;
+        $primaryTopic = EntityExtractor::extractTopic($task, ['about', 'on', 'for', 'to', 'in', 'project', 'agent']);
 
         // Dynamic Tool Execution
         $toolRegistry = new \Core\Tools\ToolRegistry();
         $tool = $toolRegistry->getTool($intent);
         if ($tool !== null) {
-            $result = $tool->execute(['task' => $task, 'intent' => $intent]);
-            if (isset($result['response'])) {
-                return $result['response'];
+            $inputs = ['task' => $task, 'intent' => $intent];
+            
+            // Map task to tool-specific inputs dynamically
+            if ($intent === 'calculator') {
+                $inputs['expression'] = $primaryTopic;
+            } elseif ($intent === 'read_file' && $primaryFile) {
+                $inputs['path'] = $primaryFile;
+            } elseif ($intent === 'write_file' && $primaryFile) {
+                $inputs['path'] = $primaryFile;
+                // If it asks for content, we might need a separate extractor, but for now fallback to string manip
+                preg_match('/(?:with content|text)\s+(.*)/i', $task, $m);
+                $inputs['content'] = $m[1] ?? 'Default Content';
+            } elseif ($intent === 'execute_command') {
+                $inputs['command'] = str_replace(['run command', 'execute command', 'execute'], '', $task);
+            } elseif ($intent === 'learn_fact') {
+                $inputs['fact'] = str_replace(['learn fact', 'save fact', 'memorize'], '', $task);
+            }
+
+            if (!empty($inputs['path']) || !empty($inputs['command']) || !empty($inputs['fact']) || !empty($inputs['expression'])) {
+                 $result = $tool->execute($inputs);
+                 // Unify return keys
+                 $resVal = $result['response'] ?? $result['payload'] ?? $result['result'] ?? $result['content'] ?? $result['message'] ?? null;
+                 if ($resVal !== null) {
+                     return $resVal;
+                 }
             }
         }
 
         switch ($intent) {
             case 'test_file':
-                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
-                    $path = $m[1];
-                    $output = $this->terminal->runPhp($path);
-                    return "[AGENT] Test Results for $path:\n" . $output;
+                if ($primaryFile) {
+                    $output = $this->terminal->runPhp($primaryFile);
+                    return "[AGENT] Test Results for $primaryFile:\n" . $output;
                 }
-                return "Which file should I test?";
+                return "Which file should I test? I couldn't find a filename in your request.";
 
             case 'research':
-                $topic = trim(str_replace(['research about', 'tell me about', 'research'], '', $task));
                 $search = new \Core\Tools\Search\WebProSearch();
-                return $search->researchCode($topic);
+                return $search->researchCode($primaryTopic);
 
             case 'audit_file':
-                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                if ($primaryFile) {
                     $debugger = new \Core\Tools\Debugger\NeuralDebugger();
-                    return $debugger->auditFile($m[1]);
+                    return $debugger->auditFile($primaryFile);
                 }
                 return "Which file should I audit?";
 
@@ -115,16 +135,13 @@ class AgenticCore {
                 return $scribe->generateReadme();
 
             case 'document_folder':
-                if (preg_match('/folder (.*)/', $task, $m) || preg_match('/directory (.*)/', $task, $m)) {
-                    $scribe = new \Core\Tools\Documentation\AutoScribe();
-                    return $scribe->documentFolder(trim($m[1]));
-                }
-                return "Which folder should I document?";
+                $folder = !empty($entities['names']) ? $entities['names'][0] : (explode(' ', $primaryTopic)[0] ?? 'core');
+                $scribe = new \Core\Tools\Documentation\AutoScribe();
+                return $scribe->documentFolder($folder);
 
             case 'plan_project':
-                $goal = trim(str_replace(['plan project', 'create a plan for'], '', $task));
                 $planner = new \Core\Tools\Planning\ProjectPlanner();
-                return $planner->plan($goal);
+                return $planner->plan($primaryTopic);
 
             case 'show_map':
                 $mapper = new \Core\Tools\Visualization\ProjectMapper();
@@ -135,48 +152,40 @@ class AgenticCore {
                 return $mapper->auditConnections();
 
             case 'optimize_file':
-                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                if ($primaryFile) {
                     $opt = new \Core\Tools\Optimization\SelfOptimizer();
-                    return $opt->optimizeFile($m[1]);
+                    return $opt->optimizeFile($primaryFile);
                 }
                 return "Which file should I optimize?";
 
             case 'patch_file':
-                if (preg_match('/([\w\.\/]+\.\w+)/', $task, $m)) {
+                if ($primaryFile) {
                     $opt = new \Core\Tools\Optimization\SelfOptimizer();
-                    return $opt->applyAutoPatch($m[1]);
+                    return $opt->applyAutoPatch($primaryFile);
                 }
                 return "Which file should I patch?";
 
             case 'deploy_project':
-                $project = trim(str_replace(['deploy project', 'deploy'], '', $task));
                 $deployer = new \Core\Tools\Deployment\AutoDeployer();
-                return $deployer->deploy($project);
+                return $deployer->deploy($primaryTopic);
 
             case 'enable_ai':
-                if (preg_match('/in (.*)/', $task, $m) || preg_match('/to (.*)/', $task, $m)) {
-                    $bridge = new \Core\Tools\Connectivity\APIBridgeGenerator();
-                    return $bridge->generateBridge(trim($m[1]));
-                }
-                return "Where should I enable the AI?";
+                $bridge = new \Core\Tools\Connectivity\APIBridgeGenerator();
+                return $bridge->generateBridge($primaryTopic);
 
             case 'evolve':
                 $evolver = new \Core\Evolution\RecursiveEvolver();
                 return $evolver->evolve();
 
             case 'git_init':
-                if (preg_match('/([\w\.\/]+)/', str_replace('git init', '', $task), $m)) {
-                    $git = new \Core\Tools\Git\GitPro();
-                    return $git->init(trim($m[1]));
-                }
-                return "Provide a path for git init.";
+                $path = $primaryFile ?? '.';
+                $git = new \Core\Tools\Git\GitPro();
+                return $git->init($path);
 
             case 'commit':
-                if (preg_match('/([\w\.\/]+)/', str_replace(['commit changes', 'commit'], '', $task), $m)) {
-                    $git = new \Core\Tools\Git\GitPro();
-                    return $git->commitChanges(trim($m[1]));
-                }
-                return "Provide a path to commit.";
+                $path = $primaryFile ?? '.';
+                $git = new \Core\Tools\Git\GitPro();
+                return $git->commitChanges($path);
 
             case 'spawn_agent':
                 if (preg_match('/agent (.*) specialized in (.*)/', $task, $m)) {
@@ -198,9 +207,9 @@ class AgenticCore {
                 return "Provide agents and the task to collaborate on.";
 
             case 'analyze_image':
-                if (preg_match('/([\w\.\/]+\.(png|jpg|jpeg|gif))/', $task, $m)) {
+                if ($primaryFile) {
                     $vision = new \Core\Tools\Vision\NeuralEyeCore();
-                    return $vision->analyzeImage($m[1]);
+                    return $vision->analyzeImage($primaryFile);
                 }
                 return "Please provide a valid image path to analyze.";
 
@@ -213,11 +222,9 @@ class AgenticCore {
                 return $singularity->reachSingularity();
 
             case 'train':
-                if (preg_match('/(\d+)/', $task, $m)) {
-                    $trainer = new \Core\Learning\MassiveTrainer();
-                    return $trainer->startTraining((int)$m[1]);
-                }
-                return "How many lines should I train on?";
+                $lines = !empty($entities['numbers']) ? (int)$entities['numbers'][0] : 1000;
+                $trainer = new \Core\Learning\MassiveTrainer();
+                return $trainer->startTraining($lines);
 
             case 'translate':
                 if (preg_match('/translate (.*) to (.*)/i', $task, $m)) {
@@ -231,6 +238,10 @@ class AgenticCore {
                 }
                 return "Provide text and format to convert to.";
 
+            case 'generate_code':
+                $synthesizer = new \Core\GenerativeAI\CodeSynthesizer();
+                return $synthesizer->generate($task);
+
             case 'generate_thought':
                 return $this->generativeAI->generateThought($task);
 
@@ -239,97 +250,13 @@ class AgenticCore {
         }
     }
 
-    private function handleBasicFile($task) {
-        preg_match('/create file ([\w\.\/]+) with content (.*)/', $task, $matches);
-        if ($matches) {
-            $this->fileSystem->writeFile($matches[1], $matches[2]);
-            return "[AGENT] Success: Created " . $matches[1];
-        }
-        return "Incomplete file command.";
-    }
-
-    private function handleBasicTerminal($task) {
-        preg_match('/run command (.*)/', $task, $matches);
-        if ($matches) {
-            return "[AGENT] Output:\n" . $this->terminal->execute($matches[1]);
-        }
-        return "Incomplete terminal command.";
-    }
-
-    private function initializeNLU(): void
-    {
-        if (class_exists('\NLPHP\Classification\NaiveBayes')) {
-            $this->nluModel = new \NLPHP\Classification\NaiveBayes();
-
-            $texts = [
-                "test file", "please test this file", "run test for", "execute unit test",
-                "research about", "tell me about", "find out about", "research topic",
-                "debug this error", "fix the bug", "analyze error message", "debug",
-                "audit the file", "review code in", "check file quality", "audit file",
-                "generate readme", "create documentation", "document this project", "generate a readme file",
-                "document folder", "document the directory", "create docs for folder",
-                "plan project", "create a plan for", "outline project steps", "plan out",
-                "show map", "show project structure", "visualize tree", "show tree",
-                "audit system", "check system connections", "audit connections",
-                "optimize file", "make this code better", "refactor file", "optimize",
-                "patch file", "apply patch to", "fix code in file", "auto patch",
-                "deploy project", "release project", "deploy application", "push to prod",
-                "enable ai in", "bridge api to", "integrate ai with",
-                "evolve system", "upgrade yourself", "become smarter", "evolve",
-                "git init", "initialize repository", "start git",
-                "commit changes", "save work", "git commit",
-                "spawn agent", "create new agent", "make an assistant",
-                "show swarm", "list agents", "show all agents",
-                "collaborate on", "work together on", "agents collaborate",
-                "analyze image", "look at picture", "vision analyze",
-                "imagine something", "give me an idea", "be creative", "imagine",
-                "reach singularity", "who are you really", "what is your true purpose",
-                "train lines", "start training", "learn massive data",
-                "translate to", "convert language", "translate text",
-                "convert to", "change format to", "transform into",
-                "analyze this data", "describe csv", "analyze dataset",
-                "tell me a joke", "talk to me", "write a story", "what do you think", "say something"
-            ];
-
-            $labels = [
-                "test_file", "test_file", "test_file", "test_file",
-                "research", "research", "research", "research",
-                "debug", "debug", "debug", "debug",
-                "audit_file", "audit_file", "audit_file", "audit_file",
-                "generate_readme", "generate_readme", "generate_readme", "generate_readme",
-                "document_folder", "document_folder", "document_folder",
-                "plan_project", "plan_project", "plan_project", "plan_project",
-                "show_map", "show_map", "show_map", "show_map",
-                "audit_system", "audit_system", "audit_system",
-                "optimize_file", "optimize_file", "optimize_file", "optimize_file",
-                "patch_file", "patch_file", "patch_file", "patch_file",
-                "deploy_project", "deploy_project", "deploy_project", "deploy_project",
-                "enable_ai", "enable_ai", "enable_ai",
-                "evolve", "evolve", "evolve", "evolve",
-                "git_init", "git_init", "git_init",
-                "commit", "commit", "commit",
-                "spawn_agent", "spawn_agent", "spawn_agent",
-                "show_swarm", "show_swarm", "show_swarm",
-                "collaborate", "collaborate", "collaborate",
-                "analyze_image", "analyze_image", "analyze_image",
-                "imagine", "imagine", "imagine", "imagine",
-                "singularity", "singularity", "singularity",
-                "train", "train", "train",
-                "translate", "translate", "translate",
-                "convert", "convert", "convert",
-                "data_analyze", "data_analyze", "data_analyze",
-                "generate_thought", "generate_thought", "generate_thought", "generate_thought", "generate_thought"
-            ];
-
-            $this->nluModel->fit($texts, $labels);
-        }
-    }
-
     private function registerCommands(): void
     {
-        // This is where we register the new, refactored commands.
-        // As we convert the legacy `if` blocks below into command classes,
-        // we add them here.
         $this->commands[] = new CreateProjectCommand($this->fileSystem);
+        $this->commands[] = new ShowMapCommand();
+        $this->commands[] = new CalculateCommand();
+        $this->commands[] = new RunCommandCommand();
+        $this->commands[] = new DebugCommand();
+        $this->commands[] = new AuditFileCommand();
     }
 }

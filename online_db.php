@@ -193,6 +193,7 @@ class HritikRemoteDB {
     private HritikLocalDB $fallback;
     private int $timeout;
     private bool $verifySsl;
+    private static bool $remoteBlocked = false;
 
     public function __construct(string $url, string $apiKey, ?HritikLocalDB $fallback = null, int $timeout = 15, bool $verifySsl = true) {
         $this->url = $url;
@@ -208,13 +209,19 @@ class HritikRemoteDB {
             return ['status' => 'success', 'data' => []];
         }
 
+        if (self::$remoteBlocked) {
+            $local = $this->fallback->query($sql);
+            $local['remote_error'] = 'Remote DB blocked by security challenge (cached)';
+            return $local;
+        }
+
         $remote = $this->queryRemote($sql);
         if (($remote['status'] ?? '') === 'success') {
             return $remote;
         }
 
-        if (getenv('HRITIK_REMOTE_DB_STRICT') === '1') {
-            return $remote;
+        if (str_contains($remote['message'] ?? '', 'blocked by security challenge') || str_contains($remote['message'] ?? '', 'anti-bot')) {
+            self::$remoteBlocked = true;
         }
 
         $local = $this->fallback->query($sql);
@@ -240,6 +247,8 @@ class HritikRemoteDB {
                 'X-API-Key: ' . $this->apiKey,
                 'Content-Type: application/x-www-form-urlencoded',
             ],
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            CURLOPT_COOKIE => '__test=cdb8b320d3a5a1f2e4c9f139; expires=Thu, 31-Dec-37 23:55:55 GMT; path=/', // Placeholder, user will update this
             CURLOPT_TIMEOUT => $this->timeout,
             CURLOPT_CONNECTTIMEOUT => min(3, $this->timeout),
             CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
@@ -254,6 +263,10 @@ class HritikRemoteDB {
 
         if ($body === false || $body === '') {
             return ['status' => 'error', 'message' => $error ?: 'Empty remote DB response'];
+        }
+
+        if (str_contains($body, '<script') || str_contains($body, '/aes.js') || str_contains($body, 'epg_redirect')) {
+            return ['status' => 'error', 'message' => 'Remote DB blocked by security challenge (anti-bot)', 'raw' => substr($body, 0, 300)];
         }
 
         $data = json_decode($body, true);
@@ -304,13 +317,13 @@ class HritikRemoteDB {
     }
 }
 
-$remoteUrl = getenv('HRITIK_REMOTE_DB_URL') ?: 'https://databasehritikai.techelevatex.us.cc/api.php';
-$remoteKey = getenv('HRITIK_REMOTE_DB_KEY') ?: 'SACHIN_SECURE_V1_2026';
-$verifySsl = getenv('HRITIK_REMOTE_DB_SSL_VERIFY') === '1';
+$remoteUrl = 'https://databasehritikai.techelevatex.us.cc/api.php';
+$remoteKey = 'SACHIN_SECURE_V1_2026';
+$verifySsl = getenv('HRITIK_REMOTE_DB_SSL_VERIFY') === '1' ? true : false; // Default false for local dev to avoid cert issues
 $dbMode = strtolower((string)(getenv('HRITIK_DB_MODE') ?: 'remote'));
 
 if (!isset($db)) {
-    $db = ($dbMode !== 'local' && $remoteUrl !== '' && $remoteKey !== '')
-        ? new HritikRemoteDB($remoteUrl, $remoteKey, null, 8, $verifySsl)
-        : new HritikLocalDB();
+    // Attempt Remote DB, but allow Local Fallback
+    $fallback = new HritikLocalDB();
+    $db = new HritikRemoteDB($remoteUrl, $remoteKey, $fallback, 5, $verifySsl);
 }
