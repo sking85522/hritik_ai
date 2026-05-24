@@ -6,6 +6,10 @@ use NeuralPHP\Models\Sequential;
 use NeuralPHP\Layers\Dense;
 use NeuralPHP\Layers\Dropout;
 use NeuralPHP\Layers\BatchNorm;
+use NeuralPHP\Layers\Embedding;
+use NeuralPHP\Layers\Reasoning;
+use NeuralPHP\Layers\Flatten;
+use NeuralPHP\Tokenizer\TextTokenizer;
 use NeuralPHP\Activations\Sigmoid;
 use NeuralPHP\Activations\ReLU;
 use NeuralPHP\Activations\Tanh;
@@ -42,6 +46,28 @@ class NeuralPHP
     public static function BatchNorm(int $size, float $epsilon = 1e-5): BatchNorm
     {
         return new BatchNorm($size, $epsilon);
+    }
+
+    public static function Embedding(int $vocab_size, int $embedding_dim): Embedding
+    {
+        return new Embedding($vocab_size, $embedding_dim);
+    }
+
+    public static function Reasoning(int $dim): Reasoning
+    {
+        return new Reasoning($dim);
+    }
+
+    public static function Flatten(): Flatten
+    {
+        return new Flatten();
+    }
+
+    // ──────────── Tokenizer ────────────
+
+    public static function TextTokenizer(): TextTokenizer
+    {
+        return new TextTokenizer();
     }
 
     // ──────────── Activations ────────────

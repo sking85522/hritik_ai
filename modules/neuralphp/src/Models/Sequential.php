@@ -11,7 +11,7 @@ class Sequential
     private $loss;
     private $optimizer;
 
-    public function add(Dense $layer)
+    public function add(object $layer)
     {
         $this->layers[] = $layer;
     }
