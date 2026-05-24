@@ -45,7 +45,7 @@ class MainEngine {
     }
 
     public function processPrompt(string $prompt, string $sessionId = 'default', $onToken = null): array {
-        $prompt = trim($prompt);
+        $prompt = trim((string)preg_replace('/^(?:\xEF\xBB\xBF|\x{FEFF})/u', '', $prompt));
         if (empty($prompt)) {
             return ['status' => 'success', 'response' => '', 'intent' => 'empty'];
         }
@@ -56,6 +56,11 @@ class MainEngine {
         $source = 'none';
         $evidence = [];
 
+        $response = $this->basicConversation($prompt);
+        if ($response !== null) {
+            $source = 'built_in_conversation';
+        }
+
         // 0. Permanent Memory Recall (Personal Context)
         $personalContext = $this->personalMemory->recall($prompt);
         if ($personalContext) {
@@ -64,7 +69,7 @@ class MainEngine {
 
         // 1. Check SQL Knowledge (Dynamic)
         $sql = $this->sqlGen->generate('search_knowledge', ['query' => $prompt]);
-        if ($sql) {
+        if (!$response && $sql) {
             $dbRes = $this->queryDB($sql);
             if (!empty($dbRes)) {
                 $response = $dbRes[0]['k_value'];
@@ -176,5 +181,27 @@ class MainEngine {
         if (!isset($db) || $db === null) return [];
         $res = $db->query($sql);
         return $res['data'] ?? [];
+    }
+
+    private function basicConversation(string $prompt): ?string {
+        $text = strtolower(trim($prompt));
+
+        if (preg_match('/^(hi|hello|hey|hlo|helo|namaste|salam)$/i', $text)) {
+            return "Namaste bhai! Main Hritik AI ready hoon. Aap bolo, kya karna hai?";
+        }
+
+        if (preg_match('/(kaise ho|kese ho|how are you|kya haal)/i', $text)) {
+            return "Main theek hoon bhai, ab console bhi stable chal raha hai. Aap apna kaam batao.";
+        }
+
+        if (preg_match('/(tumhara naam|tera naam|who are you|kaun ho|kaun hai tu|hritik ai)/i', $text)) {
+            return "Main Hritik AI hoon, aapka local PHP assistant. Main project files, commands, debugging aur coding tasks mein help kar sakta hoon.";
+        }
+
+        if (preg_match('/(bye|goodbye|alvida|shukria|thank you|thanks)$/i', $text)) {
+            return "Alvida bhai! Jab bhi zarurat ho, main yahin hoon.";
+        }
+
+        return null;
     }
 }

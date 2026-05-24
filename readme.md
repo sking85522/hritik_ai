@@ -50,6 +50,18 @@ To start interacting with Hritik AI, run the console application from your termi
 php console.php
 ```
 
+On this XAMPP setup, `php` may not be available in PATH. Use:
+
+```bat
+.\run_console.bat
+```
+
+Or run PHP directly:
+
+```bat
+H:\xampp\php\php.exe console.php
+```
+
 This will launch the interactive AI shell, where you can start giving commands.
 
 ## 🐍 Note on `hritik_ai_py`

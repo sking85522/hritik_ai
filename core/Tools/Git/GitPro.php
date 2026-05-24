@@ -37,4 +37,11 @@ class GitPro {
         $out = $this->shell->execute('git -C ' . escapeshellarg($root) . ' commit -m ' . escapeshellarg($message));
         return "[GIT]\n" . $out;
     }
+
+    public function pullChanges(string $branch = 'main'): string {
+        $root = dirname(__DIR__, 3);
+        $cmd = 'git -C ' . escapeshellarg($root) . ' pull origin ' . escapeshellarg($branch);
+        $out = $this->shell->execute($cmd);
+        return "[GIT PULL]\n" . $out;
+    }
 }
