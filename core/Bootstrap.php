@@ -27,6 +27,7 @@ spl_autoload_register(function ($class) {
         'NLPHP\\'      => 'nlphp/src/',
         'PandaPHP\\'   => 'pandaphp/src/',
         'DatasetPHP\\' => 'datasetphp/src/',
+        'PHPTorch\\'   => 'phptorch/src/',
     ];
 
     $singleFileModules = [
@@ -39,6 +40,14 @@ spl_autoload_register(function ($class) {
         'LoRAPHP\\'         => 'loraphp/LoRAPHP.php',
         'EvalPHP\\'         => 'evalphp/EvalPHP.php',
     ];
+
+    if ($class === 'torch') {
+        $file = $moduleDir . 'phptorch/PHPTorch.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+    }
 
     foreach ($singleFileModules as $prefix => $path) {
         if (strpos($class, $prefix) === 0) {

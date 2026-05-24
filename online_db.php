@@ -187,4 +187,129 @@ class HritikLocalDB {
     }
 }
 
-$db = $db ?? new HritikLocalDB();
+class HritikRemoteDB {
+    private string $url;
+    private string $apiKey;
+    private HritikLocalDB $fallback;
+    private int $timeout;
+    private bool $verifySsl;
+
+    public function __construct(string $url, string $apiKey, ?HritikLocalDB $fallback = null, int $timeout = 15, bool $verifySsl = true) {
+        $this->url = $url;
+        $this->apiKey = $apiKey;
+        $this->fallback = $fallback ?: new HritikLocalDB();
+        $this->timeout = $timeout;
+        $this->verifySsl = $verifySsl;
+    }
+
+    public function query(string $sql): array {
+        $sql = trim($sql);
+        if ($sql === '') {
+            return ['status' => 'success', 'data' => []];
+        }
+
+        $remote = $this->queryRemote($sql);
+        if (($remote['status'] ?? '') === 'success') {
+            return $remote;
+        }
+
+        if (getenv('HRITIK_REMOTE_DB_STRICT') === '1') {
+            return $remote;
+        }
+
+        $local = $this->fallback->query($sql);
+        $local['remote_error'] = $remote['message'] ?? 'Remote DB unavailable';
+        if ($this->isWriteQuery($sql)) {
+            $this->queueFailedWrite($sql, $local['remote_error']);
+            $local['queued_for_remote_sync'] = true;
+        }
+        return $local;
+    }
+
+    private function queryRemote(string $sql): array {
+        if (!function_exists('curl_init')) {
+            return ['status' => 'error', 'message' => 'PHP cURL extension is not enabled'];
+        }
+
+        $ch = curl_init($this->url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query(['sql' => base64_encode($sql)]),
+            CURLOPT_HTTPHEADER => [
+                'X-API-Key: ' . $this->apiKey,
+                'Content-Type: application/x-www-form-urlencoded',
+            ],
+            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_CONNECTTIMEOUT => min(8, $this->timeout),
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+            CURLOPT_SSL_VERIFYPEER => $this->verifySsl,
+            CURLOPT_SSL_VERIFYHOST => $this->verifySsl ? 2 : 0,
+        ]);
+
+        $body = curl_exec($ch);
+        $error = curl_error($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($body === false || $body === '') {
+            return ['status' => 'error', 'message' => $error ?: 'Empty remote DB response'];
+        }
+
+        $data = json_decode($body, true);
+        if (!is_array($data)) {
+            return ['status' => 'error', 'message' => "Invalid remote DB JSON (HTTP {$code})", 'raw' => substr($body, 0, 300)];
+        }
+
+        if ($code >= 400 && ($data['status'] ?? '') !== 'success') {
+            $data['status'] = 'error';
+        }
+
+        return $data;
+    }
+
+    private function isWriteQuery(string $sql): bool {
+        return (bool)preg_match('/^\s*(INSERT|REPLACE|UPDATE|DELETE|CREATE|ALTER|DROP)\b/i', $sql);
+    }
+
+    private function queueFailedWrite(string $sql, string $error): void {
+        $path = __DIR__ . '/storage/remote_db_queue.json';
+        $queue = [];
+        if (is_file($path)) {
+            $loaded = json_decode((string)file_get_contents($path), true);
+            if (is_array($loaded)) {
+                $queue = $loaded;
+            }
+        }
+
+        $hash = hash('sha256', $sql);
+        foreach ($queue as $item) {
+            if (($item['hash'] ?? '') === $hash) {
+                return;
+            }
+        }
+
+        $queue[] = [
+            'hash' => $hash,
+            'sql' => $sql,
+            'error' => $error,
+            'queued_at' => date('c'),
+        ];
+
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        file_put_contents($path, json_encode($queue, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
+}
+
+$remoteUrl = getenv('HRITIK_REMOTE_DB_URL') ?: 'https://databasehritikai.techelevatex.us.cc/api.php';
+$remoteKey = getenv('HRITIK_REMOTE_DB_KEY') ?: 'SACHIN_SECURE_V1_2026';
+$verifySsl = getenv('HRITIK_REMOTE_DB_SSL_VERIFY') === '1';
+
+if (!isset($db)) {
+    $db = ($remoteUrl !== '' && $remoteKey !== '')
+        ? new HritikRemoteDB($remoteUrl, $remoteKey, null, 15, $verifySsl)
+        : new HritikLocalDB();
+}
