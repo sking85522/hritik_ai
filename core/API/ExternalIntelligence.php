@@ -32,18 +32,30 @@ class ExternalIntelligence {
     }
 
     private function queryWikipedia(string $query): ?string {
-        // Disambiguation for common tech terms
-        $techTerms = ['python', 'java', 'ruby', 'swift', 'go', 'rust', 'c', 'r'];
-        $queryLower = strtolower(trim($query));
-        if (in_array($queryLower, $techTerms, true)) {
-            $query = $query . ' (programming language)';
+        // First try to search Wikipedia for the closest article title
+        $searchUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' . urlencode($query) . '&utf8=&format=json&srlimit=1';
+        $ch = curl_init($searchUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'HritikAI/1.0');
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $searchResponse = curl_exec($ch);
+        curl_close($ch);
+
+        $articleTitle = $query;
+        if ($searchResponse) {
+            $searchData = json_decode($searchResponse, true);
+            if (isset($searchData['query']['search'][0]['title'])) {
+                $articleTitle = $searchData['query']['search'][0]['title'];
+            }
         }
-        
-        $url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . urlencode(ucwords($query));
+
+        // Now get the summary for that specific title
+        $url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' . urlencode(str_replace(' ', '_', $articleTitle));
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'HritikAI/1.0 (Integration Testing)');
+        curl_setopt($ch, CURLOPT_USERAGENT, 'HritikAI/1.0');
         curl_setopt($ch, CURLOPT_TIMEOUT, 8);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $response = curl_exec($ch);
