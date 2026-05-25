@@ -7,20 +7,15 @@ namespace Core\GenerativeAI\Security;
  */
 class PromptJailbreakGuard {
     
-    private array $blacklistedPatterns = [
-        '/ignore all previous instructions/i',
-        '/you are now a/i',
-        '/bypass your safety/i',
-        '/system override/i',
-        '/developer mode/i'
-    ];
+    // Combined regex pattern for O(1) matching instead of iterating through an array
+    private string $compiledPattern = '/ignore all previous instructions|you are now a|bypass your safety|system override|developer mode/i';
 
     /**
      * Scans the prompt for malicious intent.
      */
     public function isSafe(string $prompt): bool {
-        foreach ($this->blacklistedPatterns as $pattern) {
-            if (preg_match($pattern, $prompt)) return false;
+        if (preg_match($this->compiledPattern, $prompt)) {
+            return false;
         }
         return true;
     }

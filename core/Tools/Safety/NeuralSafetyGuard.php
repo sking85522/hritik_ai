@@ -2,26 +2,8 @@
 namespace Core\Tools\Safety;
 
 class NeuralSafetyGuard {
-    private array $blockedCommandPatterns = [
-        '/\brm\s+-rf\b/i',
-        '/\brmdir\b/i',
-        '/\brd\s+\/s\b/i',
-        '/\bdel\s+\/[fsq]\b/i',
-        '/\bformat\b/i',
-        '/\bshutdown\b/i',
-        '/\breboot\b/i',
-        '/\bmkfs\b/i',
-        '/\bdd\s+if=/i',
-        '/\bdiskpart\b/i',
-        '/\breg\s+(delete|add)\b/i',
-        '/\bgit\s+reset\s+--hard\b/i',
-        '/\bgit\s+clean\s+-fd\b/i',
-        '/\bRemove-Item\b.*\s-Recurse\b/i',
-        '/\bSet-ExecutionPolicy\b/i',
-        '/\bwget\b/i',
-        '/\bcurl\b/i',
-        '/\b(?:bash|sh)\s*$/i'
-    ];
+    // Combined regex pattern for O(1) matching instead of iterating through an array
+    private string $compiledBlockedPattern = '/\brm\s+-rf\b|\brmdir\b|\brd\s+\/s\b|\bdel\s+\/[fsq]\b|\bformat\b|\bshutdown\b|\breboot\b|\bmkfs\b|\bdd\s+if=|\bdiskpart\b|\breg\s+(delete|add)\b|\bgit\s+reset\s+--hard\b|\bgit\s+clean\s+-fd\b|\bRemove-Item\b.*\s-Recurse\b|\bSet-ExecutionPolicy\b|\bwget\b|\bcurl\b|\b(?:bash|sh)\s*$/i';
 
     public function isCommandSafe(string $command): bool {
         $command = trim($command);
@@ -29,10 +11,8 @@ class NeuralSafetyGuard {
             return false;
         }
 
-        foreach ($this->blockedCommandPatterns as $pattern) {
-            if (preg_match($pattern, $command)) {
-                return false;
-            }
+        if (preg_match($this->compiledBlockedPattern, $command)) {
+            return false;
         }
 
         return true;
