@@ -42,10 +42,19 @@ class HinglishProcessor {
      * Detects if the sentence is primarily Hinglish.
      */
     public function detectHinglish(string $text): bool {
-        $hinglishMarkers = ['hai', 'hain', 'tha', 'thi', 'the', 'kya', 'kaise', 'kyu', 'aur', 'toh', 'sahi', 'yaar', 'bhai'];
+        static $hinglishMarkers = [
+            'hai' => true, 'hain' => true, 'tha' => true, 'thi' => true, 'the' => true,
+            'kya' => true, 'kaise' => true, 'kyu' => true, 'aur' => true, 'toh' => true,
+            'sahi' => true, 'yaar' => true, 'bhai' => true
+        ];
+
         $words = explode(' ', strtolower($text));
-        $matches = array_intersect($words, $hinglishMarkers);
-        return count($matches) > 0;
+        foreach ($words as $word) {
+            if (isset($hinglishMarkers[$word])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
