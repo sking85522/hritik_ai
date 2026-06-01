@@ -62,16 +62,9 @@ class EntityExtractor {
 
     private function extractDates(string $text): array {
         $dates = [];
-        // ISO dates
-        if (preg_match_all('/\b\d{4}[-\/]\d{1,2}[-\/]\d{1,2}\b/', $text, $m)) {
-            $dates = array_merge($dates, $m[0]);
-        }
-        // DD/MM/YYYY or MM/DD/YYYY
-        if (preg_match_all('/\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/', $text, $m)) {
-            $dates = array_merge($dates, $m[0]);
-        }
-        // Month names
-        if (preg_match_all('/\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:\s*,?\s*\d{4})?\b/i', $text, $m)) {
+        // Combined regex for single-pass matching natively in C
+        $pattern = '/\b(?:\d{4}[-\/]\d{1,2}[-\/]\d{1,2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:\s*,?\s*\d{4})?)\b/i';
+        if (preg_match_all($pattern, $text, $m)) {
             $dates = array_merge($dates, $m[0]);
         }
         return array_values(array_unique($dates));
@@ -208,13 +201,14 @@ class EntityExtractor {
 
     private function extractVariables(string $text): array {
         $vars = [];
-        // Look for common variable indicators like "name", "age", "items" or quoted strings
-        if (preg_match_all('/(?:variable|var|param|parameter)\s+([a-zA-Z0-9_]+)/i', $text, $m)) {
-            $vars = array_merge($vars, $m[1]);
-        }
-        // Extract quoted strings which might be table names or variable names
-        if (preg_match_all('/[\'"]([a-zA-Z0-9_]+)[\'"]/', $text, $m)) {
-            $vars = array_merge($vars, $m[1]);
+        // Combined regex for single-pass matching natively in C
+        $pattern = '/(?:variable|var|param|parameter)\s+([a-zA-Z0-9_]+)|[\'"]([a-zA-Z0-9_]+)[\'"]/i';
+        if (preg_match_all($pattern, $text, $m, PREG_SET_ORDER)) {
+            foreach ($m as $match) {
+                // $match[1] is the unquoted variable, $match[2] is the quoted variable.
+                // Using null coalescing operator avoids 'empty()' edge cases with literal '0'
+                $vars[] = $match[2] ?? $match[1];
+            }
         }
         return array_values(array_unique($vars));
     }
