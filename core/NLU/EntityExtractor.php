@@ -141,26 +141,18 @@ class EntityExtractor {
     }
 
     private function extractProgrammingLanguage(string $text): ?string {
-        $text = strtolower($text);
-        $langs = [
-            'php' => 'php',
-            'javascript' => 'javascript',
+        // Combined regex for O(1) matching via C engine instead of PHP loops
+        static $pattern = '/\b(php|javascript|js|pyth[o]n|py|html|css|java|c\+\+|cpp|react|node)\b/i';
+        static $map = [
             'js' => 'javascript',
-            'python' => 'python',
             'py' => 'python',
-            'html' => 'html',
-            'css' => 'css',
-            'java' => 'java',
-            'c++' => 'cpp',
-            'cpp' => 'cpp',
-            'react' => 'react',
-            'node' => 'node'
+            'c++' => 'cpp'
         ];
 
-        foreach ($langs as $key => $val) {
-            if (preg_match('/\b' . preg_quote($key, '/') . '\b/i', $text)) {
-                return $val;
-            }
+        if (preg_match($pattern, strtolower($text), $matches)) {
+            $lang = $matches[1];
+            // If the matched string is pyth[o]n, it will be mapped correctly anyway, but we just check the map
+            return $map[$lang] ?? $lang;
         }
         return null; // Default or unknown
     }
@@ -196,6 +188,16 @@ class EntityExtractor {
                 foreach ($match as $groupName => $groupValue) {
                     if (is_string($groupName) && $groupValue !== '') {
                         $structures[$groupName] = true;
+        $structures = [];
+        
+        // Single combined regex mapping for O(1) matching via C engine instead of PHP nested loops
+        static $pattern = '/\b(?:(?<function>function|method|routine|fun|banao ek function)|(?<class>class|object|oop|module)|(?<loop>loop|for loop|while loop|foreach)|(?<array>array|list|dictionary|map)|(?<database>database|db|sql|query|mysql|connection)|(?<crud>crud|manager|insert|update|delete|read|select)|(?<auth>auth|login|signup|register|session|token|password)|(?<api>api|fetch|endpoint|rest|http|request)|(?<ui>ui|layout|design|page|form|button|card|dashboard))\b/i';
+
+        if (preg_match_all($pattern, strtolower($text), $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                foreach ($match as $key => $val) {
+                    if (!is_int($key) && $val !== '') {
+                        $structures[$key] = true;
                     }
                 }
             }
