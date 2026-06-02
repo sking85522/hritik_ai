@@ -48,11 +48,23 @@ class NeuralTranslator {
      * Detects the dominant language (en, hi, or hinglish).
      */
     public function detectLanguage(string $text): string {
-        $hiMarkers = ['hai', 'hain', 'tha', 'the', 'kya', 'kaise', 'aur', 'toh'];
+        // Optimization: Static associative array for O(1) lookups instead of array_intersect
+        static $hiMarkers = [
+            'hai' => true, 'hain' => true, 'tha' => true, 'the' => true,
+            'kya' => true, 'kaise' => true, 'aur' => true, 'toh' => true
+        ];
+
         $words = explode(' ', strtolower($text));
-        $hiCount = count(array_intersect($words, $hiMarkers));
+        $hiCount = 0;
+
+        foreach ($words as $word) {
+            if (isset($hiMarkers[$word])) {
+                $hiCount++;
+                // Early return optimization
+                if ($hiCount > 2) return 'hi';
+            }
+        }
         
-        if ($hiCount > 2) return 'hi';
         if ($hiCount > 0) return 'hinglish';
         return 'en';
     }
