@@ -17,10 +17,12 @@ class EntityRecognizer {
         $found = [];
 
         foreach ($patterns as $type => $regexList) {
-            foreach ($regexList as $pattern) {
-                $regex = '/' . preg_quote($pattern, '/') . '/i';
-                if (preg_match($regex, $text, $matches)) {
-                    $found[] = ['type' => $type, 'value' => $matches[0]];
+            if (empty($regexList)) continue;
+            $escapedPatterns = array_map(function($p) { return preg_quote($p, '/'); }, $regexList);
+            $regex = '/(' . implode('|', $escapedPatterns) . ')/i';
+            if (preg_match_all($regex, $text, $matches)) {
+                foreach ($matches[0] as $match) {
+                    $found[] = ['type' => $type, 'value' => $match];
                 }
             }
         }
