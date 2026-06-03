@@ -11,8 +11,11 @@ class PolitenessDetector {
      * Detects the respect level (Aap vs Tu vs Neutral).
      */
     public function detect(string $text): string {
-        if (preg_match('/(aap|please|kripya|sir|ji)/i', $text)) return 'formal_respectful';
-        if (preg_match('/(tu|tera|abe)/i', $text)) return 'informal_aggressive';
+        static $pattern = '/(?<formal_respectful>aap|please|kripya|sir|ji)|(?<informal_aggressive>tu|tera|abe)/i';
+        if (preg_match($pattern, $text, $matches)) {
+            if (isset($matches['formal_respectful']) && $matches['formal_respectful'] !== '') return 'formal_respectful';
+            if (isset($matches['informal_aggressive']) && $matches['informal_aggressive'] !== '') return 'informal_aggressive';
+        }
         return 'neutral_casual';
     }
 
@@ -20,9 +23,9 @@ class PolitenessDetector {
      * Calculates a politeness score (0 to 1).
      */
     public function score(string $text): float {
-        $score = 0.5;
-        if ($this->detect($text) === 'formal_respectful') $score = 0.9;
-        if ($this->detect($text) === 'informal_aggressive') $score = 0.2;
-        return $score;
+        $detected = $this->detect($text);
+        if ($detected === 'formal_respectful') return 0.9;
+        if ($detected === 'informal_aggressive') return 0.2;
+        return 0.5;
     }
 }
