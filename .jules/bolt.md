@@ -21,3 +21,6 @@
 ## 2024-06-03 - Combining Regex Alternations Safely
 **Learning:** When refactoring sequential regex conditionals (e.g. `if (preg_match(...))`) into a single combined regex using alternation (`|`) and named groups, using `preg_match` is still extremely fast, but iterating over capture groups to determine which one matched using an `isset` check can be optimized.
 **Action:** When combining patterns, use `preg_match($pattern, $text, $matches)` and verify named capture groups. Ensure you check for empty string matches (`$matches['group'] !== ''`) to safely determine which branch fired without sacrificing precedence logic if ordered correctly.
+## 2024-06-05 - str_ireplace array optimization
+**Learning:** In PHP, passing an array of strings directly to `str_replace()` or `str_ireplace()` is significantly faster than iterating over the array with a userland `foreach` loop, as the iteration is handled natively in the highly optimized C engine. I also learned to be careful about not inadvertently committing local run artifacts like `storage/local_db.json`.
+**Action:** When performing string replacements across an array of search terms or dictionary mappings, pass the arrays directly to the string replacement function instead of looping in PHP.

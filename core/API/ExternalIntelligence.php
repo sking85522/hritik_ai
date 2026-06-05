@@ -107,9 +107,8 @@ class ExternalIntelligence {
             'ke baare mein', 'kahan hai', 'kidhar hai', 'kab hua'
         ];
         
-        foreach ($removals as $word) {
-            $prompt = str_ireplace($word, '', $prompt);
-        }
+        // Optimization: Pass array directly to str_ireplace to leverage native C loop
+        $prompt = str_ireplace($removals, '', $prompt);
         
         return trim(preg_replace('/\s+/', ' ', str_replace(['?', '!', '.'], '', $prompt)));
     }

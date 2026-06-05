@@ -15,8 +15,9 @@ class DialectMapper {
     public function map(string $text): string {
         $dialects = $this->getDialects();
         
-        foreach ($dialects as $slang => $standard) {
-            $text = str_ireplace($slang, $standard, $text);
+        // Optimization: Extract keys and values to array to leverage native C str_ireplace loop
+        if (!empty($dialects)) {
+            $text = str_ireplace(array_keys($dialects), array_values($dialects), $text);
         }
         
         return $text;

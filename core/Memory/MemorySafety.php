@@ -9,10 +9,8 @@ class MemorySafety {
      * Sanitizes a string before storage.
      */
     public function sanitize(string $content): string {
-        foreach ($this->blacklist as $term) {
-            $content = str_ireplace($term, '[REDACTED]', $content);
-        }
-        return $content;
+        // Optimization: Pass array directly to str_ireplace to leverage native C loop
+        return str_ireplace($this->blacklist, '[REDACTED]', $content);
     }
 
     /**
