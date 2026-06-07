@@ -107,6 +107,7 @@ class ExternalIntelligence {
             'ke baare mein', 'kahan hai', 'kidhar hai', 'kab hua'
         ];
         
+        // Optimization: Pass array directly to str_ireplace to leverage native C loop
         // Use native C implementation of str_ireplace with an array
         // instead of a foreach loop for ~35% performance improvement
         $prompt = str_ireplace($removals, '', $prompt);

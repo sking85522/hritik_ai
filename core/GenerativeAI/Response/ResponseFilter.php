@@ -19,10 +19,8 @@ class ResponseFilter {
      * Polishes the raw generated text into a premium Hritik AI response.
      */
     public function polish(string $text): string {
-        // 1. Strip Robotic Clichés
-        foreach ($this->robotArtifacts as $artifact) {
-            $text = str_ireplace($artifact, 'Main Hritik AI hoon aur meri samajh ke hisaab se', $text);
-        }
+        // 1. Strip Robotic Clichés - Optimization: use array in str_ireplace for native C loop
+        $text = str_ireplace($this->robotArtifacts, 'Main Hritik AI hoon aur meri samajh ke hisaab se', $text);
 
         // 2. Hinglish Smoothing (Neural Bridge)
         $text = $this->applyBilingualFlow($text);
