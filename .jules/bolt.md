@@ -24,3 +24,7 @@
 ## 2024-06-05 - str_ireplace array optimization
 **Learning:** In PHP, passing an array of strings directly to `str_replace()` or `str_ireplace()` is significantly faster than iterating over the array with a userland `foreach` loop, as the iteration is handled natively in the highly optimized C engine. I also learned to be careful about not inadvertently committing local run artifacts like `storage/local_db.json`.
 **Action:** When performing string replacements across an array of search terms or dictionary mappings, pass the arrays directly to the string replacement function instead of looping in PHP.
+
+## 2024-06-10 - O(N²) array_merge in PHP Loops
+**Learning:** In PHP, using `$array = array_merge($array, $new_elements)` inside a loop (especially for numerical operations or neural network recursive parsing) causes a massive O(N²) performance bottleneck. PHP reallocates memory and copies all existing elements of `$array` on every iteration, leading to exponential execution time as the array grows.
+**Action:** Replace `$array = array_merge($array, $new_elements)` inside loops with `foreach ($new_elements as $item) { $array[] = $item; }`. This enables O(1) appending per element and completely solves the memory reallocation scaling issue, keeping execution time strictly linear. Note: While array spread operators (`array_push($array, ...$new_elements)`) are slightly faster, they risk throwing an `ArgumentCountError` on massive numerical datasets, so the `foreach` strategy is safer.
