@@ -128,7 +128,15 @@ class EntityExtractor {
         
         $clean = preg_replace('/[^a-z0-9\s\p{L}]/u', ' ', $text);
         $words = preg_split('/\s+/', $clean, -1, PREG_SPLIT_NO_EMPTY);
-        $keywords = array_filter($words, fn($w) => mb_strlen($w) > 2 && !isset($stopWords[$w]));
+
+        $keywords = [];
+        // Optimization: Replaced array_filter with foreach to avoid closure overhead.
+        // Also short-circuits the O(1) isset check before the relatively expensive mb_strlen function call.
+        foreach ($words as $w) {
+            if (!isset($stopWords[$w]) && mb_strlen($w) > 2) {
+                $keywords[] = $w;
+            }
+        }
         
         return array_values(array_unique($keywords));
     }
