@@ -181,16 +181,6 @@ class EntityExtractor {
                 foreach ($match as $groupName => $groupValue) {
                     if (is_string($groupName) && $groupValue !== '') {
                         $structures[$groupName] = true;
-        $structures = [];
-        
-        // Single combined regex mapping for O(1) matching via C engine instead of PHP nested loops
-        static $pattern = '/\b(?:(?<function>function|method|routine|fun|banao ek function)|(?<class>class|object|oop|module)|(?<loop>loop|for loop|while loop|foreach)|(?<array>array|list|dictionary|map)|(?<database>database|db|sql|query|mysql|connection)|(?<crud>crud|manager|insert|update|delete|read|select)|(?<auth>auth|login|signup|register|session|token|password)|(?<api>api|fetch|endpoint|rest|http|request)|(?<ui>ui|layout|design|page|form|button|card|dashboard))\b/i';
-
-        if (preg_match_all($pattern, strtolower($text), $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                foreach ($match as $key => $val) {
-                    if (!is_int($key) && $val !== '') {
-                        $structures[$key] = true;
                     }
                 }
             }
@@ -211,5 +201,32 @@ class EntityExtractor {
             }
         }
         return array_values(array_unique($vars));
+    }
+
+    public static function extractTopic(string $text, array $prepositions = []): string {
+        if (empty($prepositions)) {
+            $prepositions = ['about', 'on', 'for', 'to', 'in', 'project', 'agent'];
+        }
+
+        $topic = '';
+        foreach ($prepositions as $prep) {
+            $pattern = '/\b' . preg_quote($prep, '/') . '\b\s+(.*)/i';
+            if (preg_match($pattern, $text, $matches)) {
+                $topic = $matches[1];
+                break;
+            }
+        }
+
+        if (empty($topic)) {
+            // Fallback: Use the last few words or the whole text if short
+            $words = explode(' ', $text);
+            if (count($words) > 3) {
+                $topic = implode(' ', array_slice($words, -3));
+            } else {
+                $topic = $text;
+            }
+        }
+
+        return trim($topic);
     }
 }
