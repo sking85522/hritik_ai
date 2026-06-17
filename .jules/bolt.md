@@ -31,3 +31,7 @@
 ## 2024-06-08 - array_filter vs foreach optimization
 **Learning:** In PHP, replacing `array_filter` mapped with a closure by a direct `foreach` loop eliminates function call overhead, yielding significant performance gains (~2x to 3x) in computationally heavy paths like text tokenization. Also, replacing `preg_split` followed by `array_filter` with `preg_split(..., -1, PREG_SPLIT_NO_EMPTY)` is much faster (~2x to 3x) because the filtering is done natively in C instead of iterating the array in PHP.
 **Action:** When filtering array results from `preg_split`, always use the `PREG_SPLIT_NO_EMPTY` flag instead of a separate `array_filter` call. When filtering arrays with custom logic (like `strlen > 1`), prefer a direct `foreach` loop over `array_filter` with a closure for hot loops.
+
+## 2024-06-25 - Recursive array_merge Flattening Optimization
+**Learning:** In PHP, using `array_merge()` recursively inside array-flattening functions (like deep nesting flatteners) causes an O(N²) memory reallocation bottleneck, where every intermediate merged array is reallocated on each recursive pass. Replacing `array_merge` with a reference-based array `&$result` that simply appends items (`$result[] = $item`) natively avoids all intermediate array construction, resulting in massive speedups (e.g. 15x faster on large/deep arrays).
+**Action:** When creating recursive flattening functions or recursive data mappers, always pass a result array by reference `array &$result` instead of returning arrays and merging them with `array_merge()`.

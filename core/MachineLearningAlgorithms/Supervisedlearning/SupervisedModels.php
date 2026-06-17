@@ -19,8 +19,9 @@ class LinearRegressionModel {
 
         // Add bias column (ones) to X
         $XBias = [];
+        // Bolt Optimization: Replace array_merge in loop with faster array spread operator
         foreach ($X as $row) {
-            $XBias[] = array_merge([1], $row);
+            $XBias[] = [1, ...$row];
         }
 
         // Transpose X
@@ -49,8 +50,9 @@ class LinearRegressionModel {
         if (!$this->trained) throw new \Exception("Model not trained.");
         
         $predictions = [];
+        // Bolt Optimization: Replace array_merge in loop with faster array spread operator
         foreach ($X as $row) {
-            $rowBias = array_merge([1], $row);
+            $rowBias = [1, ...$row];
             $pred = 0;
             for ($i = 0; $i < count($rowBias); $i++) {
                 $pred += $rowBias[$i] * $this->weights[$i];
