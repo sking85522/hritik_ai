@@ -9,25 +9,9 @@ class Flatten
     public static function flatten(NDArray $a): NDArray
     {
         $data = $a->getData();
-        $flatData = self::recursiveFlatten($data);
+        $flatData = [];
+        // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) by-reference append
+        \NumPHP\Utils\Helpers::flatten($data, $flatData);
         return new NDArray($flatData, $a->getDtype());
-    }
-
-    private static function recursiveFlatten($data): array
-    {
-        $result = [];
-        if (!is_array($data)) {
-            return [$data];
-        }
-
-        foreach ($data as $element) {
-            if (is_array($element)) {
-                $result = array_merge($result, self::recursiveFlatten($element));
-            } else {
-                $result[] = $element;
-            }
-        }
-
-        return $result;
     }
 }
