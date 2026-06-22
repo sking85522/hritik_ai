@@ -46,14 +46,18 @@ class Quantizer {
 
     private static function flatten(array $array): array {
         $result = [];
+        self::flattenRef($array, $result);
+        return $result;
+    }
+
+    private static function flattenRef(array $array, array &$result): void {
         foreach ($array as $value) {
             if (is_array($value)) {
-                $result = array_merge($result, self::flatten($value));
+                self::flattenRef($value, $result);
             } else {
                 $result[] = $value;
             }
         }
-        return $result;
     }
 
     private static function mapRecursive(array $array, callable $callback): array {
