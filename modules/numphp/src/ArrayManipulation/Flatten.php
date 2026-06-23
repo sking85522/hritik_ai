@@ -6,28 +6,20 @@ use NumPHP\Core\NDArray;
 
 class Flatten
 {
+    /**
+     * Flattens a multidimensional NDArray into a 1D NDArray.
+     *
+     * ⚡ Bolt Performance Optimization:
+     * Replaced the previous `recursiveFlatten` method, which used `array_merge`
+     * inside a loop (O(N^2) complexity due to memory reallocation), with
+     * `\NumPHP\Utils\Helpers::flatten()`, which passes the result array by reference.
+     * This achieves O(N) complexity and significantly reduces memory usage and execution time.
+     */
     public static function flatten(NDArray $a): NDArray
     {
         $data = $a->getData();
-        $flatData = self::recursiveFlatten($data);
+        $flatData = [];
+        \NumPHP\Utils\Helpers::flatten($data, $flatData);
         return new NDArray($flatData, $a->getDtype());
-    }
-
-    private static function recursiveFlatten($data): array
-    {
-        $result = [];
-        if (!is_array($data)) {
-            return [$data];
-        }
-
-        foreach ($data as $element) {
-            if (is_array($element)) {
-                $result = array_merge($result, self::recursiveFlatten($element));
-            } else {
-                $result[] = $element;
-            }
-        }
-
-        return $result;
     }
 }
