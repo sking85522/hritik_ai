@@ -31,3 +31,7 @@
 ## 2024-06-08 - array_filter vs foreach optimization
 **Learning:** In PHP, replacing `array_filter` mapped with a closure by a direct `foreach` loop eliminates function call overhead, yielding significant performance gains (~2x to 3x) in computationally heavy paths like text tokenization. Also, replacing `preg_split` followed by `array_filter` with `preg_split(..., -1, PREG_SPLIT_NO_EMPTY)` is much faster (~2x to 3x) because the filtering is done natively in C instead of iterating the array in PHP.
 **Action:** When filtering array results from `preg_split`, always use the `PREG_SPLIT_NO_EMPTY` flag instead of a separate `array_filter` call. When filtering arrays with custom logic (like `strlen > 1`), prefer a direct `foreach` loop over `array_filter` with a closure for hot loops.
+
+## 2024-06-12 - Pass-by-Reference Flatten Optimization
+**Learning:** When creating multi-dimensional array flattening utility functions (`Flatten::flatten()`, `Median::median()`, `Quantizer::flatten()`), a recursive approach using `array_merge()` creates an exponential O(N²) penalty due to memory reallocation in PHP loops.
+**Action:** Always implement recursive multi-dimensional array flattening by using a pass-by-reference output array `&$result`. This turns an O(N²) array merge bottleneck into an O(1) array append operation (`$result[] = $val;`), drastically improving array generation speed in `NumPHP` and `QuantizationPHP` modules without altering the output structure.
