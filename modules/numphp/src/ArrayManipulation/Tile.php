@@ -20,7 +20,10 @@ class Tile
 
         $result = [];
         for ($i = 0; $i < $reps; $i++) {
-            $result = array_merge($result, $data);
+            // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
+            foreach ($data as $item) {
+                $result[] = $item;
+            }
         }
 
         return new NDArray($result, $a->getDtype());

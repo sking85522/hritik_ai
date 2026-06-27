@@ -13,16 +13,17 @@ class Flatten
         return new NDArray($flatData, $a->getDtype());
     }
 
-    private static function recursiveFlatten($data): array
+    private static function recursiveFlatten($data, array &$result = []): array
     {
-        $result = [];
         if (!is_array($data)) {
-            return [$data];
+            $result[] = $data;
+            return $result;
         }
 
         foreach ($data as $element) {
             if (is_array($element)) {
-                $result = array_merge($result, self::recursiveFlatten($element));
+                // Bolt Optimization: Pass array by reference to avoid O(N^2) array_merge overhead
+                self::recursiveFlatten($element, $result);
             } else {
                 $result[] = $element;
             }
