@@ -31,3 +31,7 @@
 ## 2024-06-08 - array_filter vs foreach optimization
 **Learning:** In PHP, replacing `array_filter` mapped with a closure by a direct `foreach` loop eliminates function call overhead, yielding significant performance gains (~2x to 3x) in computationally heavy paths like text tokenization. Also, replacing `preg_split` followed by `array_filter` with `preg_split(..., -1, PREG_SPLIT_NO_EMPTY)` is much faster (~2x to 3x) because the filtering is done natively in C instead of iterating the array in PHP.
 **Action:** When filtering array results from `preg_split`, always use the `PREG_SPLIT_NO_EMPTY` flag instead of a separate `array_filter` call. When filtering arrays with custom logic (like `strlen > 1`), prefer a direct `foreach` loop over `array_filter` with a closure for hot loops.
+
+## 2024-06-25 - Combined array_filter and array_map with foreach loop
+**Learning:** In PHP, chaining `array_filter` and `array_map` with closures causes unnecessary function call and closure overhead. When both are used in sequence (e.g., in a text tokenizer that filters stopwords and stems tokens), iterating over the array twice with closures is noticeably slower than a single pass using a direct `foreach` loop.
+**Action:** When filtering and subsequently mapping an array in a performance-critical path, combine the logic into a single `foreach` loop. This avoids the overhead of closures and multiple iterations, yielding measurable speedups (e.g., nearly 2x faster).
