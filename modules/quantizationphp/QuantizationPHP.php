@@ -44,11 +44,11 @@ class Quantizer {
         });
     }
 
-    private static function flatten(array $array): array {
-        $result = [];
+    // Bolt Optimization: Replaced O(N^2) array_merge with pass-by-reference O(1) appending
+    private static function flatten(array $array, array &$result = []): array {
         foreach ($array as $value) {
             if (is_array($value)) {
-                $result = array_merge($result, self::flatten($value));
+                self::flatten($value, $result);
             } else {
                 $result[] = $value;
             }

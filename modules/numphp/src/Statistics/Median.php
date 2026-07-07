@@ -20,14 +20,19 @@ class Median
         }
     }
 
-    private static function flatten($data)
+    // Bolt Optimization: Replaced O(N^2) array_merge with pass-by-reference O(1) appending
+    private static function flatten($data, array &$result = [])
     {
         if (!is_array($data)) {
-            return [$data];
+            $result[] = $data;
+            return $result;
         }
-        $result = [];
         foreach ($data as $value) {
-            $result = array_merge($result, self::flatten($value));
+            if (is_array($value)) {
+                self::flatten($value, $result);
+            } else {
+                $result[] = $value;
+            }
         }
         return $result;
     }
