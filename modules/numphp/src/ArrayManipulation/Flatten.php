@@ -14,6 +14,7 @@ class Flatten
         return new NDArray($flatData, $a->getDtype());
     }
 
+    // Bolt Optimization: Replace O(N^2) array_merge in loop with O(1) pass-by-reference array append
     /**
      * Bolt Optimization: Replaced O(N^2) array_merge with O(1) appends by passing result array by reference.
      */
