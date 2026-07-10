@@ -23,6 +23,7 @@ class Median
         }
     }
 }
+}
 
     // Bolt Optimization: Replace O(N^2) array_merge in recursion with O(1) by-reference append
     private static function flattenData($data, array &$result): void
