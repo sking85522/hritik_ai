@@ -11,6 +11,7 @@ class Median
         $data = $a->getData();
         $flattened = [];
         self::flattenData($data, $flattened);
+        self::flatten($data, $flattened);
         sort($flattened);
         $count = count($flattened);
         $middle = floor(($count - 1) / 2);
@@ -23,6 +24,8 @@ class Median
 
     // Bolt Optimization: Replace O(N^2) array_merge in recursion with O(1) by-reference append
     private static function flattenData($data, array &$result): void
+    // Bolt Optimization: Replace O(N^2) array_merge in loop with O(1) pass-by-reference array append
+    private static function flatten($data, array &$result): void
     {
         if (!is_array($data)) {
             $result[] = $data;
@@ -34,6 +37,7 @@ class Median
             } else {
                 $result[] = $value;
             }
+            self::flatten($value, $result);
         }
     }
 }

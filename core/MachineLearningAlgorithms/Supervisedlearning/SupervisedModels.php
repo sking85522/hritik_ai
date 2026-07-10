@@ -21,6 +21,7 @@ class LinearRegressionModel {
         $XBias = [];
         // Bolt Optimization: Replace array_merge in loop with faster array spread operator
         foreach ($X as $row) {
+            // Bolt Optimization: Replaced array_merge with array spread for faster memory allocation
             $XBias[] = [1, ...$row];
         }
 
@@ -52,6 +53,7 @@ class LinearRegressionModel {
         $predictions = [];
         // Bolt Optimization: Replace array_merge in loop with faster array spread operator
         foreach ($X as $row) {
+            // Bolt Optimization: Replaced array_merge with array spread for faster memory allocation
             $rowBias = [1, ...$row];
             $pred = 0;
             for ($i = 0; $i < count($rowBias); $i++) {
