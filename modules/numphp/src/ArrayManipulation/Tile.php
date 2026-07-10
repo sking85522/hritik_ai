@@ -21,6 +21,7 @@ class Tile
         $result = [];
         // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
         for ($i = 0; $i < $reps; $i++) {
+            // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
             foreach ($data as $item) {
                 $result[] = $item;
             }
