@@ -61,9 +61,12 @@ class HinglishProcessor {
      * Maps informal Hinglish commands to system actions.
      */
     public function mapIntent(string $text): string {
-        if (preg_match('/(theek|fix|shi|thik|banao|update)/u', $text)) return 'ACTION_FIX';
-        if (preg_match('/(dikhaye|check|check kr|analyze)/u', $text)) return 'ACTION_INSPECT';
-        if (preg_match('/(batao|pucho|query|sawal)/u', $text)) return 'QUERY_INFORMATIONAL';
+        static $pattern = '/(?<ACTION_FIX>theek|fix|shi|thik|banao|update)|(?<ACTION_INSPECT>dikhaye|check|check kr|analyze)|(?<QUERY_INFORMATIONAL>batao|pucho|query|sawal)/u';
+        if (preg_match($pattern, $text, $matches)) {
+            if (isset($matches['ACTION_FIX']) && $matches['ACTION_FIX'] !== '') return 'ACTION_FIX';
+            if (isset($matches['ACTION_INSPECT']) && $matches['ACTION_INSPECT'] !== '') return 'ACTION_INSPECT';
+            if (isset($matches['QUERY_INFORMATIONAL']) && $matches['QUERY_INFORMATIONAL'] !== '') return 'QUERY_INFORMATIONAL';
+        }
         return 'UNKNOWN';
     }
 }

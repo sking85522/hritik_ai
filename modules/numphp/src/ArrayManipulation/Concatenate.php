@@ -52,7 +52,10 @@ class Concatenate
                      // Scalar treated as 1-element array in context of 1D
                      $resultData[] = $data;
                 } else {
-                    $resultData = array_merge($resultData, $data);
+                    // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
+                    foreach ($data as $item) {
+                        $resultData[] = $item;
+                    }
                 }
             }
             return new NDArray($resultData, $dtype);
@@ -68,7 +71,10 @@ class Concatenate
                 $nextData = $nextArr->getData();
 
                 for ($i = 0; $i < $rows; $i++) {
-                    $resultData[$i] = array_merge($resultData[$i], $nextData[$i]);
+                    // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
+                    foreach ($nextData[$i] as $item) {
+                        $resultData[$i][] = $item;
+                    }
                 }
             }
             return new NDArray($resultData, $dtype);
@@ -85,7 +91,10 @@ class Concatenate
                 $nextData = $nextArr->getData();
                 for ($i = 0; $i < $rows; $i++) {
                     for ($j = 0; $j < $cols; $j++) {
-                        $resultData[$i][$j] = array_merge($resultData[$i][$j], $nextData[$i][$j]);
+                        // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
+                        foreach ($nextData[$i][$j] as $item) {
+                            $resultData[$i][$j][] = $item;
+                        }
                     }
                 }
             }

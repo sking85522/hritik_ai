@@ -15,11 +15,17 @@ abstract class Module {
             if ($prop instanceof \PHPTorch\Tensor && $prop->requires_grad) {
                 $params[] = $prop;
             } elseif ($prop instanceof Module) {
-                $params = array_merge($params, $prop->parameters());
+                // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
+                foreach ($prop->parameters() as $p) {
+                    $params[] = $p;
+                }
             } elseif (is_array($prop)) {
                 foreach ($prop as $item) {
                      if ($item instanceof Module) {
-                         $params = array_merge($params, $item->parameters());
+                         // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
+                         foreach ($item->parameters() as $p) {
+                             $params[] = $p;
+                         }
                      }
                 }
             }

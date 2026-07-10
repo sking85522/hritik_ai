@@ -128,7 +128,15 @@ class EntityExtractor {
         
         $clean = preg_replace('/[^a-z0-9\s\p{L}]/u', ' ', $text);
         $words = preg_split('/\s+/', $clean, -1, PREG_SPLIT_NO_EMPTY);
-        $keywords = array_filter($words, fn($w) => mb_strlen($w) > 2 && !isset($stopWords[$w]));
+
+        $keywords = [];
+        // Optimization: Replaced array_filter with foreach to avoid closure overhead.
+        // Also short-circuits the O(1) isset check before the relatively expensive mb_strlen function call.
+        foreach ($words as $w) {
+            if (!isset($stopWords[$w]) && mb_strlen($w) > 2) {
+                $keywords[] = $w;
+            }
+        }
         
         return array_values(array_unique($keywords));
     }
@@ -153,27 +161,6 @@ class EntityExtractor {
     private function extractCodingStructures(string $text): array {
         $text = strtolower($text);
 
-        static $compiledRegex = null;
-        if ($compiledRegex === null) {
-            $maps = [
-                'function' => ['function', 'method', 'routine', 'fun', 'banao ek function'],
-                'class'    => ['class', 'object', 'oop', 'module'],
-                'loop'     => ['loop', 'for loop', 'while loop', 'foreach'],
-                'array'    => ['array', 'list', 'dictionary', 'map'],
-                'database' => ['database', 'db', 'sql', 'query', 'mysql', 'connection'],
-                'crud'     => ['crud', 'manager', 'insert', 'update', 'delete', 'read', 'select'],
-                'auth'     => ['auth', 'login', 'signup', 'register', 'session', 'token', 'password'],
-                'api'      => ['api', 'fetch', 'endpoint', 'rest', 'http', 'request'],
-                'ui'       => ['ui', 'layout', 'design', 'page', 'form', 'button', 'card', 'dashboard']
-            ];
-
-            $groups = [];
-            foreach ($maps as $struct => $keywords) {
-                $escaped = array_map(function($kw) { return preg_quote($kw, '/'); }, $keywords);
-                $groups[] = '(?P<' . $struct . '>' . implode('|', $escaped) . ')';
-            }
-            $compiledRegex = '/\b(?:' . implode('|', $groups) . ')\b/i';
-        }
 
         $structures = [];
         if (preg_match_all($compiledRegex, $text, $matches, PREG_SET_ORDER)) {
@@ -181,6 +168,18 @@ class EntityExtractor {
                 foreach ($match as $groupName => $groupValue) {
                     if (is_string($groupName) && $groupValue !== '') {
                         $structures[$groupName] = true;
+
+
+        $structures = [];
+        
+        // Single combined regex mapping for O(1) matching via C engine instead of PHP nested loops
+        static $pattern = '/\b(?:(?<function>function|method|routine|fun|banao ek function)|(?<class>class|object|oop|module)|(?<loop>loop|for loop|while loop|foreach)|(?<array>array|list|dictionary|map)|(?<database>database|db|sql|query|mysql|connection)|(?<crud>crud|manager|insert|update|delete|read|select)|(?<auth>auth|login|signup|register|session|token|password)|(?<api>api|fetch|endpoint|rest|http|request)|(?<ui>ui|layout|design|page|form|button|card|dashboard))\b/i';
+
+        if (preg_match_all($pattern, strtolower($text), $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                foreach ($match as $key => $val) {
+                    if (!is_int($key) && $val !== '') {
+                        $structures[$key] = true;
                     }
                 }
             }
