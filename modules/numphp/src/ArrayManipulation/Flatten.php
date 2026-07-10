@@ -14,6 +14,9 @@ class Flatten
         return new NDArray($flatData, $a->getDtype());
     }
 
+    /**
+     * Bolt Optimization: Replaced O(N^2) array_merge with O(1) appends by passing result array by reference.
+     */
     private static function recursiveFlatten($data, array &$result): void
     {
         if (!is_array($data)) {
