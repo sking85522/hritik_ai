@@ -10,6 +10,9 @@ class Flatten
     {
         $data = $a->getData();
         $flatData = [];
+        \NumPHP\Utils\Helpers::flatten($data, $flatData);
+        return new NDArray($flatData, $a->getDtype());
+    }
         self::recursiveFlatten($data, $flatData);
         return new NDArray($flatData, $a->getDtype());
     }

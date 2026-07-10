@@ -10,6 +10,7 @@ class Median
     {
         $data = $a->getData();
         $flattened = [];
+        \NumPHP\Utils\Helpers::flatten($data, $flattened);
         self::flattenData($data, $flattened);
         self::flatten($data, $flattened);
         sort($flattened);
@@ -21,6 +22,7 @@ class Median
             return ($flattened[$middle] + $flattened[$middle + 1]) / 2;
         }
     }
+}
 
     // Bolt Optimization: Replace O(N^2) array_merge in recursion with O(1) by-reference append
     private static function flattenData($data, array &$result): void
