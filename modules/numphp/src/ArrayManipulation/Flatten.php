@@ -15,6 +15,9 @@ class Flatten
     }
 
     // Bolt Optimization: Replace O(N^2) array_merge in loop with O(1) pass-by-reference array append
+    /**
+     * Bolt Optimization: Replaced O(N^2) array_merge with O(1) appends by passing result array by reference.
+     */
     private static function recursiveFlatten($data, array &$result): void
     {
         if (!is_array($data)) {
@@ -24,6 +27,7 @@ class Flatten
 
         foreach ($data as $element) {
             if (is_array($element)) {
+                // Bolt Optimization: Replaced O(N^2) array_merge with O(1) recursive append by reference
                 self::recursiveFlatten($element, $result);
             } else {
                 $result[] = $element;
