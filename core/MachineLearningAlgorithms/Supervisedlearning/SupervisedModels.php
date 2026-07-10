@@ -19,6 +19,7 @@ class LinearRegressionModel {
 
         // Add bias column (ones) to X
         $XBias = [];
+        // Bolt Optimization: Replace array_merge in loop with faster array spread operator
         foreach ($X as $row) {
             // Bolt Optimization: Replaced array_merge with array spread for faster memory allocation
             $XBias[] = [1, ...$row];
@@ -50,6 +51,7 @@ class LinearRegressionModel {
         if (!$this->trained) throw new \Exception("Model not trained.");
         
         $predictions = [];
+        // Bolt Optimization: Replace array_merge in loop with faster array spread operator
         foreach ($X as $row) {
             // Bolt Optimization: Replaced array_merge with array spread for faster memory allocation
             $rowBias = [1, ...$row];
