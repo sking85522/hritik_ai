@@ -20,6 +20,9 @@ class Median
             return ($flattened[$middle] + $flattened[$middle + 1]) / 2;
         }
     }
+}
+}
+}
 
     private static function flatten($data, array &$result = []): void
     {

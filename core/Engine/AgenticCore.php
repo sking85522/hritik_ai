@@ -75,6 +75,14 @@ class AgenticCore {
         $intent = $this->personalBrain->predictIntent($task);
         $entities = $this->extractor->extract($task);
         
+        // Intercept generic or conversational queries and route them to Generative AI directly
+        if (in_array($intent, ['generate_thought', 'conversational', 'informational', 'imagine'])) {
+            // Check if method exists, else fallback to backward compatibility
+            if (method_exists($this->generativeAI, 'generateThought')) {
+                return $this->generativeAI->generateThought($task);
+            }
+        }
+
         // Extract primary file or generic topic dynamically without regex
         $primaryFile = !empty($entities['files']) ? $entities['files'][0] : null;
         $primaryTopic = EntityExtractor::extractTopic($task, ['about', 'on', 'for', 'to', 'in', 'project', 'agent']);
