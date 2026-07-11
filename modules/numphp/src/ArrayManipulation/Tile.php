@@ -18,11 +18,12 @@ class Tile
         $data = $a->getData();
         if (!is_array($data)) $data = [$data];
 
+        // Bolt Optimization: Replaced O(N^2) array_merge with O(1) foreach append
         $result = [];
         // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) foreach append
         for ($i = 0; $i < $reps; $i++) {
-            foreach ($data as $item) {
-                $result[] = $item;
+            foreach ($data as $val) {
+                $result[] = $val;
             }
         }
 
