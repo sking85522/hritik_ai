@@ -40,6 +40,7 @@ class Median
             return;
         }
         foreach ($data as $value) {
+            // Bolt Optimization: Replace O(N^2) array_merge with O(1) pass-by-reference append
             if (is_array($value)) {
                 // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference
                 self::flatten($value, $result);
