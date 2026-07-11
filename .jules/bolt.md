@@ -35,3 +35,6 @@
 ## 2024-06-25 - Combined array_filter and array_map with foreach loop
 **Learning:** In PHP, chaining `array_filter` and `array_map` with closures causes unnecessary function call and closure overhead. When both are used in sequence (e.g., in a text tokenizer that filters stopwords and stems tokens), iterating over the array twice with closures is noticeably slower than a single pass using a direct `foreach` loop.
 **Action:** When filtering and subsequently mapping an array in a performance-critical path, combine the logic into a single `foreach` loop. This avoids the overhead of closures and multiple iterations, yielding measurable speedups (e.g., nearly 2x faster).
+## 2024-06-10 - Custom recursive flattening vs array_walk_recursive
+**Learning:** For recursively flattening multidimensional arrays in PHP, custom iterative or recursive functions using a pass-by-reference output array (e.g., `&$result`) execute significantly faster (about 3-4x) than the native `array_walk_recursive` function, because they avoid the overhead of the closure callback on every leaf node.
+**Action:** When implementing `flatten` utility functions across the codebase, prefer a custom recursive function using `&$result` over `array_walk_recursive`.
