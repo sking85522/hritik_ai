@@ -20,6 +20,9 @@ class Median
             return ($flattened[$middle] + $flattened[$middle + 1]) / 2;
         }
     }
+}
+}
+}
 
     // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference append
     private static function flatten($data, array &$result = []): void

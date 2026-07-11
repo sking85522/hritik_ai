@@ -51,7 +51,7 @@ class Quantizer {
             if (is_array($value)) {
                 self::flatten($value, $result);
             } else {
-                $result[] = $value;
+                $out[] = $value;
             }
         }
     }
