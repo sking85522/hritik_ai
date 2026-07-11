@@ -30,6 +30,7 @@ class Median
             $result[] = $data;
             return;
         }
+
         foreach ($data as $value) {
             if (is_array($value)) {
                 self::flatten($value, $result);
