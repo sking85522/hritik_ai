@@ -25,6 +25,15 @@ class Median
 }
 }
 
+    private static function flatten($data, array &$result = []): void
+    {
+        if (!is_array($data)) {
+            $result[] = $data;
+            return;
+        }
+        foreach ($data as $value) {
+            // Bolt Optimization: Passing by reference for O(1) flattening
+            self::flatten($value, $result);
     // Bolt Optimization: Replaced O(N^2) array_merge with O(1) pass-by-reference array
     private static function flatten($data, array &$result = [])
     {
