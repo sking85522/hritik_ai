@@ -24,20 +24,26 @@ class Analyzer
         // Tokenize by splitting on whitespace
         $tokens = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
 
-        // Filter out stop words and short tokens
-        $filtered = array_filter($tokens, function($token) {
-            return strlen($token) > 1 && !isset($this->stopWords[$token]);
-        });
+        // Filter out stop words and short tokens, and apply simple stemming in a single pass
+        // Optimization: Replacing array_filter and array_map closures with a direct foreach loop
+        // avoids function call overhead, yielding a significant speedup for text tokenization.
+        $result = [];
+        foreach ($tokens as $token) {
+            if (strlen($token) > 1 && !isset($this->stopWords[$token])) {
+                // Stemming could be added here (e.g., Porter Stemmer), but we will keep it simple for now
+                // Or simple suffix stripping (very basic)
+                if (substr($token, -3) === 'ing') {
+                    $result[] = substr($token, 0, -3);
+                } elseif (substr($token, -2) === 'es' && strlen($token) > 4) {
+                    $result[] = substr($token, 0, -2);
+                } elseif (substr($token, -1) === 's' && strlen($token) > 3 && substr($token, -2) !== 'ss') {
+                    $result[] = substr($token, 0, -1);
+                } else {
+                    $result[] = $token;
+                }
+            }
+        }
 
-        // Stemming could be added here (e.g., Porter Stemmer), but we will keep it simple for now
-        // Or simple suffix stripping (very basic)
-        $stemmed = array_map(function($token) {
-            if (substr($token, -3) === 'ing') return substr($token, 0, -3);
-            if (substr($token, -2) === 'es' && strlen($token) > 4) return substr($token, 0, -2);
-            if (substr($token, -1) === 's' && strlen($token) > 3 && substr($token, -2) !== 'ss') return substr($token, 0, -1);
-            return $token;
-        }, $filtered);
-
-        return array_values($stemmed);
+        return $result;
     }
 }
