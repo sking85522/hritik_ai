@@ -46,6 +46,16 @@ class Quantizer {
         });
     }
 
+    private static function flatten(array $array): array {
+        $result = [];
+        self::flattenRef($array, $result);
+        return $result;
+    }
+
+    private static function flattenRef(array $array, array &$result): void {
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                self::flattenRef($value, $result);
     private static function flatten(array $array, array &$out): void {
         foreach ($array as $value) {
             if (is_array($value)) {

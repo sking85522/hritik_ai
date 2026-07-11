@@ -22,6 +22,10 @@ class Flatten
     {
         $data = $a->getData();
         $flatData = [];
+        \NumPHP\Utils\Helpers::flatten($data, $flatData);
+        return new NDArray($flatData, $a->getDtype());
+    }
+}
         Helpers::flatten($data, $flatData);
         return new NDArray($flatData, $a->getDtype());
     }
