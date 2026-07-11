@@ -46,6 +46,10 @@ class Quantizer {
         });
     }
 
+    private static function flatten(array $array, array &$result = []): array {
+        foreach ($array as $value) {
+            if (is_array($value)) {
+                // Bolt Optimization: Pass array by reference to avoid O(N^2) array_merge overhead
     private static function flatten(array $array, array &$result = []): void {
         foreach ($array as $value) {
             if (is_array($value)) {

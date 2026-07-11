@@ -54,6 +54,11 @@ class Flatten
         return new NDArray($flatData, $a->getDtype());
     }
 
+    private static function recursiveFlatten($data, array &$result = []): array
+    {
+        if (!is_array($data)) {
+            $result[] = $data;
+            return $result;
     private static function recursiveFlatten($data, array &$result = []): void
     // Bolt Optimization: Replace O(N^2) array_merge in recursion with O(1) by-reference append
     // Bolt Optimization: Replace O(N^2) array_merge in loop with O(1) pass-by-reference array append
@@ -69,6 +74,7 @@ class Flatten
 
         foreach ($data as $element) {
             if (is_array($element)) {
+                // Bolt Optimization: Pass array by reference to avoid O(N^2) array_merge overhead
                 // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference
                 // Bolt Optimization: Replaced O(N^2) array_merge with O(1) recursive append by reference
                 self::recursiveFlatten($element, $result);
