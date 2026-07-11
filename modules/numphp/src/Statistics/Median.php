@@ -39,6 +39,13 @@ class Median
             $result[] = $data;
             return;
         }
+        foreach ($data as $value) {
+            if (is_array($value)) {
+                // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference
+                self::flatten($value, $result);
+            } else {
+                $result[] = $value;
+            }
 
         foreach ($data as $value) {
         foreach ($data as $value) {

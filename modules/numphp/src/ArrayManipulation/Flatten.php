@@ -69,6 +69,7 @@ class Flatten
 
         foreach ($data as $element) {
             if (is_array($element)) {
+                // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference
                 // Bolt Optimization: Replaced O(N^2) array_merge with O(1) recursive append by reference
                 self::recursiveFlatten($element, $result);
             } else {
