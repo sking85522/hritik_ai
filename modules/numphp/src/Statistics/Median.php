@@ -24,7 +24,6 @@ class Median
 }
 }
 
-    // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference append
     private static function flatten($data, array &$result = []): void
     {
         if (!is_array($data)) {
@@ -32,7 +31,11 @@ class Median
             return;
         }
         foreach ($data as $value) {
-            self::flatten($value, $result);
+            if (is_array($value)) {
+                self::flatten($value, $result);
+            } else {
+                $result[] = $value;
+            }
         }
     }
 }

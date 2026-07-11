@@ -29,32 +29,10 @@ class Flatten
     {
         $data = $a->getData();
         $flatData = [];
-        // Bolt Optimization: Replaced O(N^2) array_merge with O(1) pass-by-reference recursion
-        \NumPHP\Utils\Helpers::flatten($data, $flatData);
-        return new NDArray($flatData, $a->getDtype());
-    }
-}
-        return new NDArray($flatData, $a->getDtype());
-    }
-}
-        Helpers::flatten($data, $flatData);
-        return new NDArray($flatData, $a->getDtype());
-    }
-}
-        // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) by-reference append
-        \NumPHP\Utils\Helpers::flatten($data, $flatData);
-        return new NDArray($flatData, $a->getDtype());
-    }
-        \NumPHP\Utils\Helpers::flatten($data, $flatData);
-        return new NDArray($flatData, $a->getDtype());
-    }
-        return new NDArray($flatData, $a->getDtype());
-    }
         self::recursiveFlatten($data, $flatData);
         return new NDArray($flatData, $a->getDtype());
     }
 
-    // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference append
     private static function recursiveFlatten($data, array &$result = []): void
     {
         if (!is_array($data)) {

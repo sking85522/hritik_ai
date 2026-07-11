@@ -45,7 +45,6 @@ class Quantizer {
         });
     }
 
-    // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference append
     private static function flatten(array $array, array &$result = []): void {
         foreach ($array as $value) {
             if (is_array($value)) {
