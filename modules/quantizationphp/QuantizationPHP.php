@@ -8,7 +8,6 @@ class QuantizationPHP {
 class Quantizer {
     public static function quantizeInt8(array $weights): array {
         $flat = [];
-        // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) by-reference append
         self::flatten($weights, $flat);
         if (empty($flat)) return ['quantized' => $weights, 'scale' => 1.0, 'zero_point' => 0];
 
@@ -46,14 +45,12 @@ class Quantizer {
         });
     }
 
-    private static function flatten(array $array, array &$out): void {
+    private static function flatten(array $array, array &$result = []): void {
         foreach ($array as $value) {
             if (is_array($value)) {
-                self::flatten($value, $out);
-    // Bolt Optimization: Replace O(N^2) array_merge in recursion with O(1) by-reference append
+                // Bolt Optimization: Passing by reference for O(1) flattening
+    // Bolt Optimization: Replaced O(N^2) array_merge with O(1) pass-by-reference array
     private static function flatten(array $array, array &$result = []): array {
-    // Bolt Optimization: Replace O(N^2) array_merge in loop with O(1) pass-by-reference array append
-    private static function flatten(array $array, array &$result): void {
         foreach ($array as $value) {
             if (is_array($value)) {
                 self::flatten($value, $result);
