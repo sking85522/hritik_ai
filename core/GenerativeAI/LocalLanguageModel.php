@@ -75,6 +75,21 @@ class LocalLanguageModel {
     }
 
     public function generate(string $prompt, array $evidence = [], array $analysis = []): string {
+        // Integrate external LLM call if configured
+        if (file_exists(dirname(__DIR__, 2) . '/env.php')) {
+            require_once dirname(__DIR__, 2) . '/env.php';
+        }
+
+        $provider = defined('LLM_PROVIDER') ? LLM_PROVIDER : 'local_php';
+
+        if ($provider !== 'local_php') {
+            $llmResponse = $this->callExternalLLM($prompt, $provider);
+            if ($llmResponse !== null) {
+                return $llmResponse;
+            }
+            // Fallback to local if API fails
+        }
+
         // 1. Multiverse Reasoning
         $this->cosmic->reason($prompt);
         $this->infiniteMem->recall($prompt);
@@ -93,6 +108,89 @@ class LocalLanguageModel {
         $final = $this->filter->polish($raw);
         $final = $this->slangBridge->inject($final);
         return $this->moodEngine->adapt($final, $analysis['emotion'] ?? 'neutral');
+    }
+
+    private function callExternalLLM(string $prompt, string $provider): ?string {
+        $context = "You are Hritik AI, a highly advanced, intelligent agent. The user may ask you questions in English or Hinglish (Hindi written in English). Please provide helpful, deep, and creative answers.\n\nUser: $prompt";
+
+        if ($provider === 'gemini') {
+            $apiKey = defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '';
+            if (empty($apiKey)) return null;
+
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+            $data = [
+                'contents' => [
+                    ['parts' => [['text' => $context]]]
+                ]
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response) {
+                $json = json_decode($response, true);
+                return $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
+            }
+        } elseif ($provider === 'openai') {
+            $apiKey = defined('OPENAI_API_KEY') ? OPENAI_API_KEY : '';
+            if (empty($apiKey)) return null;
+
+            $url = "https://api.openai.com/v1/chat/completions";
+            $data = [
+                'model' => 'gpt-3.5-turbo',
+                'messages' => [
+                    ['role' => 'system', 'content' => "You are Hritik AI, an advanced agent. Answer in English or Hinglish based on the prompt."],
+                    ['role' => 'user', 'content' => $prompt]
+                ]
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $apiKey
+            ]);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response) {
+                $json = json_decode($response, true);
+                return $json['choices'][0]['message']['content'] ?? null;
+            }
+        } elseif ($provider === 'ollama') {
+            $url = defined('OLLAMA_ENDPOINT') ? OLLAMA_ENDPOINT : 'http://localhost:11434/api/generate';
+            $model = defined('OLLAMA_MODEL') ? OLLAMA_MODEL : 'llama3';
+
+            $data = [
+                'model' => $model,
+                'prompt' => $context,
+                'stream' => false
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            // Small timeout to quickly fallback if Ollama is not running locally
+            curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response) {
+                $json = json_decode($response, true);
+                return $json['response'] ?? null;
+            }
+        }
+
+        return null;
     }
 
     private function composeFromEvidence(string $prompt, array $evidence, array $analysis): string {

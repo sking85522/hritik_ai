@@ -9,7 +9,8 @@ class Median
     public static function median(NDArray $a): float
     {
         $data = $a->getData();
-        $flattened = self::flatten($data);
+        $flattened = [];
+        self::flatten($data, $flattened);
         sort($flattened);
         $count = count($flattened);
         $middle = floor(($count - 1) / 2);
@@ -19,6 +20,9 @@ class Median
             return ($flattened[$middle] + $flattened[$middle + 1]) / 2;
         }
     }
+}
+}
+}
 
     // Bolt Optimization: Replaced O(N^2) array_merge with O(1) pass-by-reference array
     private static function flatten($data, array &$result = [])
@@ -34,6 +38,5 @@ class Median
                 $result[] = $value;
             }
         }
-        return $result;
     }
 }
