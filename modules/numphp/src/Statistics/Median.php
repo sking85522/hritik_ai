@@ -10,11 +10,6 @@ class Median
     {
         $data = $a->getData();
         $flattened = [];
-        // Bolt Optimization: Replaced O(N^2) array_merge with O(1) pass-by-reference recursion
-        // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) by-reference append
-        \NumPHP\Utils\Helpers::flatten($data, $flattened);
-        \NumPHP\Utils\Helpers::flatten($data, $flattened);
-        self::flattenData($data, $flattened);
         self::flatten($data, $flattened);
         sort($flattened);
         $count = count($flattened);
@@ -29,32 +24,14 @@ class Median
 }
 }
 
+    // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference append
     private static function flatten($data, array &$result = []): void
-    // Bolt Optimization: Replace O(N^2) array_merge in recursion with O(1) by-reference append
-    private static function flattenData($data, array &$result): void
-    // Bolt Optimization: Replace O(N^2) array_merge in loop with O(1) pass-by-reference array append
-    private static function flatten($data, array &$result): void
     {
         if (!is_array($data)) {
             $result[] = $data;
             return;
         }
         foreach ($data as $value) {
-            // Bolt Optimization: Replace O(N^2) array_merge with O(1) pass-by-reference append
-            if (is_array($value)) {
-                // Bolt Optimization: Replaced O(N^2) array_merge in loop with O(1) pass-by-reference
-                self::flatten($value, $result);
-            } else {
-                $result[] = $value;
-            }
-
-        foreach ($data as $value) {
-        foreach ($data as $value) {
-            if (is_array($value)) {
-                self::flattenData($value, $result);
-            } else {
-                $result[] = $value;
-            }
             self::flatten($value, $result);
         }
     }
