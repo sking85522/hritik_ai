@@ -31,3 +31,7 @@
 ## 2024-06-08 - array_filter vs foreach optimization
 **Learning:** In PHP, replacing `array_filter` mapped with a closure by a direct `foreach` loop eliminates function call overhead, yielding significant performance gains (~2x to 3x) in computationally heavy paths like text tokenization. Also, replacing `preg_split` followed by `array_filter` with `preg_split(..., -1, PREG_SPLIT_NO_EMPTY)` is much faster (~2x to 3x) because the filtering is done natively in C instead of iterating the array in PHP.
 **Action:** When filtering array results from `preg_split`, always use the `PREG_SPLIT_NO_EMPTY` flag instead of a separate `array_filter` call. When filtering arrays with custom logic (like `strlen > 1`), prefer a direct `foreach` loop over `array_filter` with a closure for hot loops.
+
+## 2024-06-12 - Recursive array flattening optimization without external dependencies
+**Learning:** When trying to optimize array flattening operations in an isolated module (e.g., `numphp`), updating local recursive methods to use an internal pass-by-reference array (e.g., `private static function recursiveFlatten($data, array &$result = []): void`) instead of returning and merging arrays (`array_merge`) preserves module isolation while maintaining the O(N) performance boost. This is preferable to introducing cross-file or cross-module dependencies to global helper classes.
+**Action:** Always prefer local pass-by-reference accumulation for array building within isolated classes or modules to avoid O(N^2) memory reallocation without breaking architecture/isolation.
