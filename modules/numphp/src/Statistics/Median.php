@@ -10,6 +10,7 @@ class Median
     {
         $data = $a->getData();
         $flattened = [];
+        // Bolt Optimization: Pass-by-reference array to avoid O(N^2) array_merge overhead
         self::flatten($data, $flattened);
         sort($flattened);
         $count = count($flattened);

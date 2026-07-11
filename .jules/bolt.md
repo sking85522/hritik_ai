@@ -31,6 +31,9 @@
 ## 2024-06-08 - array_filter vs foreach optimization
 **Learning:** In PHP, replacing `array_filter` mapped with a closure by a direct `foreach` loop eliminates function call overhead, yielding significant performance gains (~2x to 3x) in computationally heavy paths like text tokenization. Also, replacing `preg_split` followed by `array_filter` with `preg_split(..., -1, PREG_SPLIT_NO_EMPTY)` is much faster (~2x to 3x) because the filtering is done natively in C instead of iterating the array in PHP.
 **Action:** When filtering array results from `preg_split`, always use the `PREG_SPLIT_NO_EMPTY` flag instead of a separate `array_filter` call. When filtering arrays with custom logic (like `strlen > 1`), prefer a direct `foreach` loop over `array_filter` with a closure for hot loops.
+## 2024-07-20 - O(1) Pass-by-Reference Array Flattening Optimization
+**Learning:** Found multiple instances where array flattening was implemented using an `array_merge()` function call inside a `foreach` loop recursively. In PHP, this creates an $O(N^2)$ algorithmic complexity because the growing `$result` array is copied and reallocated on every iteration.
+**Action:** Replace `$result = array_merge($result, recursive_call($data))` with a method signature that accepts a pass-by-reference array `$result` as an argument (`function flatten($data, array &$result = [])`). Append to it directly using `$result[] = $element`. This changes complexity to $O(N)$.
 
 ## 2024-07-05 - Foreach over chained array operations
 **Learning:** In PHP, replacing a chain of `array_filter` followed by `array_map` with a single `foreach` loop provides significant performance boosts (e.g. ~25% speedup in token analysis). This is because it reduces array iterations from multiple passes to just one, and completely eliminates the overhead of closures (anonymous function calls).
