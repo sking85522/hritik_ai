@@ -162,6 +162,12 @@ class EntityExtractor {
         $text = strtolower($text);
 
 
+        $structures = [];
+        if (preg_match_all($compiledRegex, $text, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                foreach ($match as $groupName => $groupValue) {
+                    if (is_string($groupName) && $groupValue !== '') {
+                        $structures[$groupName] = true;
 
 
         $structures = [];
@@ -194,5 +200,32 @@ class EntityExtractor {
             }
         }
         return array_values(array_unique($vars));
+    }
+
+    public static function extractTopic(string $text, array $prepositions = []): string {
+        if (empty($prepositions)) {
+            $prepositions = ['about', 'on', 'for', 'to', 'in', 'project', 'agent'];
+        }
+
+        $topic = '';
+        foreach ($prepositions as $prep) {
+            $pattern = '/\b' . preg_quote($prep, '/') . '\b\s+(.*)/i';
+            if (preg_match($pattern, $text, $matches)) {
+                $topic = $matches[1];
+                break;
+            }
+        }
+
+        if (empty($topic)) {
+            // Fallback: Use the last few words or the whole text if short
+            $words = explode(' ', $text);
+            if (count($words) > 3) {
+                $topic = implode(' ', array_slice($words, -3));
+            } else {
+                $topic = $text;
+            }
+        }
+
+        return trim($topic);
     }
 }
