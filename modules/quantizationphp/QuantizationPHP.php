@@ -7,7 +7,8 @@ class QuantizationPHP {
 
 class Quantizer {
     public static function quantizeInt8(array $weights): array {
-        $flat = self::flatten($weights);
+        $flat = [];
+        self::flatten($weights, $flat);
         if (empty($flat)) return ['quantized' => $weights, 'scale' => 1.0, 'zero_point' => 0];
 
         $min = min($flat);
@@ -44,16 +45,15 @@ class Quantizer {
         });
     }
 
-    // Bolt Optimization: Replaced O(N^2) array_merge with pass-by-reference O(1) appending
+    // Bolt Optimization: Replaced O(N^2) array_merge with O(1) pass-by-reference array
     private static function flatten(array $array, array &$result = []): array {
         foreach ($array as $value) {
             if (is_array($value)) {
                 self::flatten($value, $result);
             } else {
-                $result[] = $value;
+                $out[] = $value;
             }
         }
-        return $result;
     }
 
     private static function mapRecursive(array $array, callable $callback): array {
