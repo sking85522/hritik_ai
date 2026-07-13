@@ -27,7 +27,10 @@ class Argwhere
     {
         if (is_array($data)) {
             foreach ($data as $key => $value) {
-                self::recursiveFind($value, array_merge($current_index, [$key]), $indices);
+                // Bolt Optimization: Replaced O(N^2) array_merge with faster array append
+                $next_index = $current_index;
+                $next_index[] = $key;
+                self::recursiveFind($value, $next_index, $indices);
             }
         } elseif ($data != 0) {
             $indices[] = $current_index;
