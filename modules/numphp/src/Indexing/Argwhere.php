@@ -32,6 +32,7 @@ class Argwhere
     {
         if (is_array($data)) {
             foreach ($data as $key => $value) {
+                // Bolt Optimization: Avoid O(N) array_merge overhead on each iteration
                 $current_index[] = $key;
                 self::recursiveFind($value, $current_index, $indices);
                 array_pop($current_index);
