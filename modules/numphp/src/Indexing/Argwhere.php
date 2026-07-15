@@ -35,6 +35,10 @@ class Argwhere
                 $current_index[] = $key;
                 self::recursiveFind($value, $current_index, $indices);
                 array_pop($current_index);
+                // Bolt Optimization: Replaced O(N^2) array_merge with faster array append
+                $next_index = $current_index;
+                $next_index[] = $key;
+                self::recursiveFind($value, $next_index, $indices);
             }
         } elseif ($data != 0) {
             $indices[] = $current_index;
