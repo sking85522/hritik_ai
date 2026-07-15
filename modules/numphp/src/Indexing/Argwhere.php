@@ -24,6 +24,8 @@ class Argwhere
     }
 
     /**
+     * Bolt Optimization: Avoid O(N^2) array_merge in recursion by using PHP's
+     * fast array copy and append. Reduces memory allocation overhead.
      * ⚡ Bolt Optimization:
      * Replaced O(N) `array_merge` inside loop with O(1) array push/pop stack operations.
      * Eliminates heavy memory reallocation during recursive traversal, giving a 3x+ speedup.

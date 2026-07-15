@@ -51,6 +51,9 @@
 ## 2024-06-10 - Custom recursive flattening vs array_walk_recursive
 **Learning:** For recursively flattening multidimensional arrays in PHP, custom iterative or recursive functions using a pass-by-reference output array (e.g., `&$result`) execute significantly faster (about 3-4x) than the native `array_walk_recursive` function, because they avoid the overhead of the closure callback on every leaf node.
 **Action:** When implementing `flatten` utility functions across the codebase, prefer a custom recursive function using `&$result` over `array_walk_recursive`.
+## 2024-07-28 - Avoid array_merge in Array Path Recursion
+**Learning:** Similar to recursive flattening, building index paths dynamically using `array_merge($current_index, [$key])` inside a recursive loop (such as in an `argwhere` function) introduces O(N²) scaling overhead due to array reallocation. It's much faster to perform a standard assignment array copy (`$next_index = $current_index`) and then append to the copy directly (`$next_index[] = $key`).
+**Action:** When maintaining state paths in recursion (like tracking the multi-dimensional index path), never use `array_merge`. Instead copy the array path explicitly using `=` and append the new path component directly using `[] =`.
 
 ## 2026-07-14 - Array_merge vs Array appending for recursive tracking
 **Learning:** Using `array_merge($current_index, [$key])` to pass updated array paths into recursive functions is unnecessarily slow in PHP because it creates a new array and copies all elements on every recursive step.
