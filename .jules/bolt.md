@@ -61,3 +61,7 @@
 ## 2024-07-12 - PHP array_merge in Recursive Loops
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
+
+## 2025-01-28 - O(N²) array_merge in Array Shape Calculation
+**Learning:** Found an anti-pattern in `NumPHP/Core/Buffer.php` where calculating the shape of multidimensional arrays used a recursive function calling `array_merge($shape, calculateShape($data[0]))`. As established in previous learnings, `array_merge` creates a new array and copies all elements at every depth level, leading to O(N²) overhead.
+**Action:** Replace the recursive `array_merge` implementation with an iterative `while(is_array($level))` loop that counts elements at each depth, exactly like how it is optimized in `NDArray.php`. This provides an O(1) space and O(N) time calculation for multidimensional array shapes.
