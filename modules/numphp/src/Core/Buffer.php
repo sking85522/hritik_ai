@@ -65,10 +65,13 @@ class Buffer
     private function calculateShape($data): array
     {
         $shape = [];
-        if (is_array($data)) {
+        // Bolt Optimization: Replaced O(N^2) recursive array_merge with O(N) iterative loop
+        while (is_array($data)) {
             $shape[] = count($data);
             if (isset($data[0])) {
-                $shape = array_merge($shape, $this->calculateShape($data[0]));
+                $data = $data[0];
+            } else {
+                break;
             }
         }
         return $shape;
