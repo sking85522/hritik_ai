@@ -154,9 +154,14 @@ class ResponseQualityGuard {
         $text = strtolower(preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text));
         $words = preg_split('/\s+/', trim($text));
 
-        return array_values(array_filter($words ?: [], function ($word) use ($stopWords) {
-            return strlen($word) > 2 && !isset($stopWords[$word]);
-        }));
+        // Bolt Optimization: Replace array_filter with closure using a foreach loop for speedup.
+        $result = [];
+        foreach ($words ?: [] as $word) {
+            if (strlen($word) > 2 && !isset($stopWords[$word])) {
+                $result[] = $word;
+            }
+        }
+        return $result;
     }
 
     private function sourceWeight(string $source): int {
