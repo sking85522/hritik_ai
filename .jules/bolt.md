@@ -61,3 +61,7 @@
 ## 2024-07-12 - PHP array_merge in Recursive Loops
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
+
+## 2024-07-28 - strtr vs str_replace for Dictionary Mappings
+**Learning:** In PHP, using `strtr($text, $mapping)` for dictionary-based string replacements is significantly faster (~2.2x speedup) than iterating over the mapping array with a `foreach` loop and calling `str_replace()`. It is also faster than calling `str_replace(array_keys($mapping), array_values($mapping), $text)`. This is because `strtr()` operates natively in C and performs a single pass over the string for replacements without additional array overhead.
+**Action:** When performing dictionary-based string normalizations or translations, always use `strtr($text, $mapping)` instead of iterating with `str_replace`.
