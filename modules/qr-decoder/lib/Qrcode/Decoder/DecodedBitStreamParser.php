@@ -331,7 +331,10 @@ final class DecodedBitStreamParser
             $result .= mb_convert_encoding($text, $encoding); //(new String(readBytes, encoding));
         }
 
-		$byteSegments = array_merge($byteSegments, $readBytes);
+		// Bolt Optimization: Replace O(N^2) array_merge with O(1) foreach append
+		foreach ($readBytes as $byte) {
+			$byteSegments[] = $byte;
+		}
 	}
 
 	private static function decodeKanjiSegment(
