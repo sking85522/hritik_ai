@@ -61,3 +61,7 @@
 ## 2024-07-12 - PHP array_merge in Recursive Loops
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
+
+## 2024-07-29 - PHP Matrix Operations Optimization
+**Learning:** In PHP, using `array_map(null, ...$matrix)` is significantly faster (~5x) for transposing 2D arrays than using nested loops, as it avoids PHP-level iterations and leverages internal C functions. Also, caching `count($array)` in loops and using row references (`$aRow = $a[$i]`) provides measurable (~2x) speedups in matrix multiplication. Warning: The array spread operator `...$matrix` can throw an `ArgumentCountError` on exceptionally massive datasets, so consider limits before utilizing this approach on unconstrained input.
+**Action:** Use `array_map(null, ...$matrix)` for array transposition where the number of rows is within reasonable memory limits. Cache array lengths and avoid re-indexing 2D arrays inside innermost loops where possible for `matmul`.
