@@ -69,25 +69,26 @@ class LinearRegressionModel {
     // ====== Pure PHP Matrix Utilities ======
 
     private function transpose(array $m): array {
-        $t = [];
-        for ($i = 0; $i < count($m[0]); $i++) {
-            $row = [];
-            for ($j = 0; $j < count($m); $j++) {
-                $row[] = $m[$j][$i];
-            }
-            $t[] = $row;
-        }
-        return $t;
+        if (empty($m) || empty($m[0])) return [];
+        // Bolt Optimization: Replace O(N^2) loops with internal C implementation via array_map
+        return array_map(null, ...$m);
     }
 
     private function matmul(array $a, array $b): array {
         $result = [];
-        for ($i = 0; $i < count($a); $i++) {
+        // Bolt Optimization: Cache counts and extract current row to avoid 2D lookups in inner loop
+        $rowsA = count($a);
+        if ($rowsA === 0) return [];
+        $colsB = count($b[0]);
+        $colsA = count($b);
+
+        for ($i = 0; $i < $rowsA; $i++) {
             $row = [];
-            for ($j = 0; $j < count($b[0]); $j++) {
+            $aRow = $a[$i];
+            for ($j = 0; $j < $colsB; $j++) {
                 $sum = 0;
-                for ($k = 0; $k < count($b); $k++) {
-                    $sum += $a[$i][$k] * $b[$k][$j];
+                for ($k = 0; $k < $colsA; $k++) {
+                    $sum += $aRow[$k] * $b[$k][$j];
                 }
                 $row[] = $sum;
             }
