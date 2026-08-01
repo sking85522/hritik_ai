@@ -46,9 +46,9 @@ class Buffer
 
     /**
      * @param mixed $data
-     * @return array
+     * @return mixed
      */
-    private function castData($data): array
+    private function castData($data)
     {
         if (is_array($data)) {
             return array_map([$this, 'castData'], $data);
@@ -64,12 +64,15 @@ class Buffer
      */
     private function calculateShape($data): array
     {
+        if (!is_array($data)) {
+            return [];
+        }
+
         $shape = [];
-        if (is_array($data)) {
-            $shape[] = count($data);
-            if (isset($data[0])) {
-                $shape = array_merge($shape, $this->calculateShape($data[0]));
-            }
+        $level = $data;
+        while (is_array($level)) {
+            $shape[] = count($level);
+            $level = $level[0] ?? null;
         }
         return $shape;
     }
