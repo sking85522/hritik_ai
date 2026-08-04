@@ -85,14 +85,16 @@ class DataFrameOps
 
             if (isset($rightLookup[$key])) {
                 foreach ($rightLookup[$key] as $rightRow) {
-                    $result[] = array_merge($leftRow, $rightRow);
+                    // Bolt Optimization: Replaced O(N^2) array_merge with faster array spread operator
+                    $result[] = [...$leftRow, ...$rightRow];
                 }
             } elseif ($how === 'left') {
                 $emptyRight = [];
                 foreach ($rightCols as $col) {
                     if ($col !== $on) $emptyRight[$col] = null;
                 }
-                $result[] = array_merge($leftRow, $emptyRight);
+                // Bolt Optimization: Replaced O(N^2) array_merge with faster array spread operator
+                $result[] = [...$leftRow, ...$emptyRight];
             }
         }
 
