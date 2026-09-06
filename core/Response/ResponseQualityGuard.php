@@ -152,11 +152,19 @@ class ResponseQualityGuard {
     public function extractKeywords(string $text): array {
         static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'me'=>true, 'my'=>true, 'what'=>true, 'who'=>true, 'how'=>true, 'where'=>true, 'kyu'=>true, 'kaise'=>true, 'btao'=>true, 'batano'=>true, 'kya'=>true, 'hai'=>true, 'ki'=>true, 'ka'=>true, 'ke'=>true, 'aur'=>true, 'mein'=>true, 'main'=>true, 'to'=>true, 'of'=>true, 'hritik'=>true, 'ai'=>true];
         $text = strtolower(preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text));
-        $words = preg_split('/\s+/', trim($text));
 
-        return array_values(array_filter($words ?: [], function ($word) use ($stopWords) {
-            return strlen($word) > 2 && !isset($stopWords[$word]);
-        }));
+        // ⚡ Bolt optimization: Use PREG_SPLIT_NO_EMPTY natively in C engine
+        $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY);
+
+        $result = [];
+        // ⚡ Bolt optimization: Replace array_filter with a native foreach loop to avoid closure overhead
+        foreach ($words ?: [] as $word) {
+            if (strlen($word) > 2 && !isset($stopWords[$word])) {
+                $result[] = $word;
+            }
+        }
+
+        return $result;
     }
 
     private function sourceWeight(string $source): int {
