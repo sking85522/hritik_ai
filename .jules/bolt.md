@@ -1,3 +1,6 @@
+## 2024-06-25 - Avoid O(N^2) array_merge in shape calculation
+**Learning:** In PHP, using `array_merge` inside a recursive function to build an array (like the shape of an N-dimensional array) results in constant reallocation and O(N^2) complexity. This causes significant performance and memory overhead for deeply nested structures.
+**Action:** Replace recursive `array_merge` patterns with simple, stateful O(N) iterative loops when processing deep structures to minimize memory allocations and improve speed.
 ## 2024-03-24 - Pre-compiling Regex vs in_array Optimization
 **Learning:** In PHP, the PCRE engine internally caches compiled regular expressions. Grouping multiple `preg_match` calls into a single massive regex does not provide a noticeable speedup over sequential `preg_match` calls, and modifying regex patterns (like adding word boundaries) risks changing application logic.
 **Action:** When looking for fast, safe array lookups inside loops, replace `in_array` or `array_intersect` with a static associative map and use `isset()`. This allows O(1) lookups and early returns without altering core matching logic.
