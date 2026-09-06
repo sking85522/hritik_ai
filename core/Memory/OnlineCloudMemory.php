@@ -168,11 +168,18 @@ class OnlineCloudMemory {
 
     private function extractKeywords(string $prompt): array {
         static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'me'=>true, 'my'=>true, 'what'=>true, 'who'=>true, 'how'=>true, 'where'=>true, 'kyu'=>true, 'kaise'=>true, 'btao'=>true, 'batano'=>true, 'kya'=>true, 'hai'=>true, 'ki'=>true, 'ka'=>true, 'ke'=>true, 'aur'=>true, 'mein'=>true, 'main'=>true, 'to'=>true, 'of'=>true];
-        $words = preg_split('/\s+/', $prompt);
+        // ⚡ Bolt optimization: Use PREG_SPLIT_NO_EMPTY natively in C engine
+        $words = preg_split('/\s+/', $prompt, -1, PREG_SPLIT_NO_EMPTY);
 
-        return array_values(array_filter($words, function ($w) use ($stopWords) {
-            return strlen($w) > 2 && !isset($stopWords[$w]);
-        }));
+        $result = [];
+        // ⚡ Bolt optimization: Replace array_filter with a native foreach loop to avoid closure overhead
+        foreach ($words ?: [] as $w) {
+            if (strlen($w) > 2 && !isset($stopWords[$w])) {
+                $result[] = $w;
+            }
+        }
+
+        return $result;
     }
 
     private function buildLikeClause(array $fields, array $keywords, string $joiner): string {
