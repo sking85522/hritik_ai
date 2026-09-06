@@ -1,3 +1,7 @@
+## 2024-11-20 - O(N^2) Overheads in Pandas PHP
+**Learning:** Method calls inside loops in PHP add considerable overhead, especially in data processing systems like DataFrames (e.g., PandaPHP). Array-fetching operations such as `$df->get()` should be pre-fetched into a standard PHP array to achieve O(1) direct access.
+Additionally, `array_merge()` inside nested loops for joins causes massive memory reallocation and O(N^2) complexity.
+**Action:** Always pre-fetch arrays before loops. Replace `array_merge` with the PHP 8.1+ spread operator (`[...$a, ...$b]`) inside intensive loops.
 ## 2024-03-24 - Pre-compiling Regex vs in_array Optimization
 **Learning:** In PHP, the PCRE engine internally caches compiled regular expressions. Grouping multiple `preg_match` calls into a single massive regex does not provide a noticeable speedup over sequential `preg_match` calls, and modifying regex patterns (like adding word boundaries) risks changing application logic.
 **Action:** When looking for fast, safe array lookups inside loops, replace `in_array` or `array_intersect` with a static associative map and use `isset()`. This allows O(1) lookups and early returns without altering core matching logic.
