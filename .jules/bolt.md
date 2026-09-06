@@ -1,3 +1,4 @@
+## 2024-05-19 - Fast PHP Matrix Multiplication
 ## 2024-06-25 - Avoid O(N^2) array_merge in shape calculation
 **Learning:** In PHP, using `array_merge` inside a recursive function to build an array (like the shape of an N-dimensional array) results in constant reallocation and O(N^2) complexity. This causes significant performance and memory overhead for deeply nested structures.
 **Action:** Replace recursive `array_merge` patterns with simple, stateful O(N) iterative loops when processing deep structures to minimize memory allocations and improve speed.
@@ -5,10 +6,9 @@
 **Learning:** In PHP, the PCRE engine internally caches compiled regular expressions. Grouping multiple `preg_match` calls into a single massive regex does not provide a noticeable speedup over sequential `preg_match` calls, and modifying regex patterns (like adding word boundaries) risks changing application logic.
 **Action:** When looking for fast, safe array lookups inside loops, replace `in_array` or `array_intersect` with a static associative map and use `isset()`. This allows O(1) lookups and early returns without altering core matching logic.
 
-## 2024-05-25 - Combined Regular Expressions for O(1) Speedup
-**Learning:** Found an anti-pattern specific to core NLP/Security logic where security validation and prompt sanitization heavily relied on iterating through arrays of individual regex strings in a `foreach` loop executing `preg_match` iteratively. Given PHP's architecture, running multiple `preg_match` checks sequentially in loops introduces huge overhead relative to a single, combined alternation regex (e.g., `/pattern1|pattern2/`) executed natively in C.
-**Action:** When finding multiple sequential string or regex patterns being matched against a single string, always combine them into a single compiled regex string and make a single `preg_match` call for significant (up to 7-10x) micro-optimization speedups.
+**Learning:** Transposing a matrix before multiplication speeds up column lookups but allocating that memory in PHP is incredibly heavy. The i-k-j loop order gives the same cache benefits for sequential row access in the inner loop WITHOUT the heavy memory cost of transposing first.
 
+**Action:** When optimizing tight nested array loops in PHP, prioritize loop reordering (like i-k-j for matrix multiplication) over allocating memory for transposed matrices.
 ## 2024-05-25 - Regex Priorities vs Combinations in PHP
 **Learning:** While combining multiple sequential `preg_match` string searches into a single `preg_match_all` query with named capturing groups and `PREG_SET_ORDER` can be fast, it fails to evaluate matches by strict code priority, instead matching whatever appears earliest in the target string. Using an array `foreach` loop over individual patterns is actually slower in PHP than explicitly writing sequential `if(preg_match())` checks.
 **Action:** When a fallback parser requires strict precedence rules, sequential `if(preg_match)` checks natively short-circuit in C and are faster than looping. To optimize them without breaking priority, remove unnecessary outer capturing groups `/(...)/` and eliminate the `/i` case-insensitivity flag when the input is guaranteed to be transformed by `strtolower()`.
