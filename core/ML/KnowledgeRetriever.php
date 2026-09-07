@@ -157,13 +157,14 @@ class KnowledgeRetriever {
         // De-duplicate by answer text
         $seen = [];
         $unique = [];
+        // Bolt Optimization: Hoist query splitting out of the results loop to avoid O(N) redundant string allocations
+        $qWords = explode(' ', strtolower($query));
         foreach ($results as $r) {
             $key = md5(strtolower($r['answer']));
             if (!isset($seen[$key])) {
                 $seen[$key] = true;
 
                 // Boost score for exact query word matches in question
-                $qWords = explode(' ', strtolower($query));
                 $questionLower = strtolower($r['question']);
                 $bonus = 0;
                 foreach ($qWords as $w) {
