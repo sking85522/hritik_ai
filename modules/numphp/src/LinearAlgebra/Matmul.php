@@ -64,19 +64,24 @@ class Matmul
 
         $result = [];
 
+        // Bolt Optimization: Use i-k-j loop order to improve cache locality
+        // and avoid O(N^3) array column lookups without needing to allocate
+        // a transposed matrix, which saves a lot of memory in PHP.
+
         // Initialize result matrix
         for ($i = 0; $i < $m; $i++) {
             $result[$i] = array_fill(0, $n, 0);
         }
 
-        // O(N^3) Multiplication
+        // O(N^3) Multiplication with i-k-j loop order
         for ($i = 0; $i < $m; $i++) {
-            for ($j = 0; $j < $n; $j++) {
-                $sum = 0;
-                for ($l = 0; $l < $k; $l++) {
-                    $sum += $dataA[$i][$l] * $dataB[$l][$j];
+            $rowA = $dataA[$i];
+            for ($l = 0; $l < $k; $l++) {
+                $a_il = $rowA[$l];
+                $rowB = $dataB[$l];
+                for ($j = 0; $j < $n; $j++) {
+                    $result[$i][$j] += $a_il * $rowB[$j];
                 }
-                $result[$i][$j] = $sum;
             }
         }
 
