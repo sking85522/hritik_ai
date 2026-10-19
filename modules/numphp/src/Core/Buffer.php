@@ -87,6 +87,14 @@ class Buffer
                 break;
             }
         $shape = [];
+        // Bolt Optimization: Replaced O(N^2) recursive array_merge with O(N) iterative loop
+        while (is_array($data)) {
+            $shape[] = count($data);
+            if (isset($data[0])) {
+                $data = $data[0];
+            } else {
+                break;
+            }
         // ⚡ Bolt Optimization:
         // Replaced O(N²) recursive `array_merge` with an iterative O(N) loop.
         // Drops execution time significantly and prevents memory overhead
