@@ -68,6 +68,9 @@ Additionally, `array_merge()` inside nested loops for joins causes massive memor
 ## 2024-07-12 - PHP array_merge in Recursive Loops
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
+## 2024-03-24 - Locality Hashing Optimization
+**Learning:** In highly repetitive neural math calculations like locality hashing, PHP's math functions inside tight inner loops can be a measurable bottleneck.
+**Action:** When implementing matrix/vector operations, always hoist invariant calculations (like `sin()`) outside the inner loop.
 
 ## 2024-08-01 - Avoid array_filter with closures for hot loops
 **Learning:** In PHP, using `array_filter` with a closure (e.g., `array_filter($array, fn($v) => ... )`) creates overhead due to the anonymous function call on every iteration. Testing shows that replacing this with a standard `foreach` loop natively in PHP provides up to a 2x-3x speedup, particularly on arrays containing string tokens or when dealing with multi-dimensional filtering.

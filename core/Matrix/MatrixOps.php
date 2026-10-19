@@ -54,7 +54,9 @@ class MatrixOps {
         for ($i = 0; $i < $planes; $i++) {
             $dot = 0;
             // Simulated random plane projection
-            foreach ($vector as $val) $dot += $val * sin($i + 1);
+            // ⚡ Bolt Optimization: Hoist invariant sin() calculation out of the inner loop
+            $sin_val = sin($i + 1);
+            foreach ($vector as $val) $dot += $val * $sin_val;
             $hash .= ($dot >= 0) ? '1' : '0';
         }
         return $hash;
