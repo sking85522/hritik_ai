@@ -107,8 +107,18 @@ class TFIDFVectorizer {
     private function tokenize(string $text): array {
         $text = strtolower(trim($text));
         $text = preg_replace('/[^a-z0-9\s\p{L}]/u', ' ', $text);
-        $tokens = preg_split('/\s+/', $text);
-        return array_filter($tokens, fn($t) => strlen($t) > 1);
+
+        // ⚡ Bolt optimization: Use PREG_SPLIT_NO_EMPTY natively in C engine
+        $tokens = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+
+        $result = [];
+        // ⚡ Bolt optimization: Replace array_filter with a native foreach loop to avoid closure overhead
+        foreach ($tokens ?: [] as $t) {
+            if (strlen($t) > 1) {
+                $result[] = $t;
+            }
+        }
+        return $result;
     }
 
     /**
