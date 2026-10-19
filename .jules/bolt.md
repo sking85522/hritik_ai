@@ -68,6 +68,10 @@ Additionally, `array_merge()` inside nested loops for joins causes massive memor
 ## 2024-07-12 - PHP array_merge in Recursive Loops
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
+
+## 2025-01-28 - O(N²) array_merge in Array Shape Calculation
+**Learning:** Found an anti-pattern in `NumPHP/Core/Buffer.php` where calculating the shape of multidimensional arrays used a recursive function calling `array_merge($shape, calculateShape($data[0]))`. As established in previous learnings, `array_merge` creates a new array and copies all elements at every depth level, leading to O(N²) overhead.
+**Action:** Replace the recursive `array_merge` implementation with an iterative `while(is_array($level))` loop that counts elements at each depth, exactly like how it is optimized in `NDArray.php`. This provides an O(1) space and O(N) time calculation for multidimensional array shapes.
 ## 2024-07-29 - O(N) Array Iteration Overhead with array_merge
 **Learning:** Using `array_merge($array1, $array2)` solely to iterate over the combined elements via a `foreach` loop (e.g., `foreach (array_merge($tokens, $attentionTokens) as $token)`) introduces unnecessary O(N) memory allocation and array copying overhead. In hot loops, this is a significant bottleneck.
 **Action:** Replace `foreach (array_merge(...))` with consecutive `foreach` loops for each array when the goal is just iteration. This keeps operations O(1) in memory allocation and avoids full array duplication, yielding substantial speedups.
