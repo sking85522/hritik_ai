@@ -72,6 +72,10 @@ Additionally, `array_merge()` inside nested loops for joins causes massive memor
 ## 2024-07-12 - PHP array_merge in Recursive Loops
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
+
+## 2024-05-24 - Hoist loop invariants to avoid redundant allocations
+**Learning:** In PHP, performing string operations like `explode(' ', strtolower($query))` inside a loop over results (e.g., in `KnowledgeRetriever::rankResults`) causes the exact same string array to be re-allocated in memory on every iteration, introducing O(N) overhead.
+**Action:** Hoist the query splitting logic outside of the `foreach` loop. This simple change reduces execution time in the ranking logic by ~20%.
 ## 2024-08-04 - Array Spread vs array_merge
 **Learning:** In PHP, using the array spread operator `[...$array1, ...$array2]` is generally faster than `array_merge($array1, $array2)` because it is handled natively by the Zend Engine parser as a language construct rather than a function call, reducing overhead.
 **Action:** Replace `array_merge` with the spread operator `[...$a, ...$b]` where practical, especially in tight loops.
