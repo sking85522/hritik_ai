@@ -78,6 +78,14 @@ class Buffer
         // Bolt Optimization: Replaced O(N^2) recursive array_merge with
         // O(N) iterative while loop to calculate multi-dimensional array shape faster.
         $shape = [];
+        // Bolt Optimization: Replaced O(N^2) array_merge with O(1) iterative while loop
+        while (is_array($data)) {
+            $shape[] = count($data);
+            if (isset($data[0])) {
+                $data = $data[0];
+            } else {
+                break;
+            }
         $shape = [];
         // ⚡ Bolt Optimization:
         // Replaced O(N²) recursive `array_merge` with an iterative O(N) loop.
