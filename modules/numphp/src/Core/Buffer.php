@@ -46,9 +46,9 @@ class Buffer
 
     /**
      * @param mixed $data
-     * @return array
+     * @return mixed
      */
-    private function castData($data): array
+    private function castData($data)
     {
         if (is_array($data)) {
             return array_map([$this, 'castData'], $data);
@@ -67,6 +67,10 @@ class Buffer
      *
      * @param mixed $data
      * @return int[]
+     *
+     * ⚡ Bolt Performance Optimization:
+     * Replaced O(N^2) recursive `array_merge` with O(N) iterative array traversal.
+     * Deeply nested arrays no longer trigger exponential memory reallocation overhead.
      */
     private function calculateShape($data): array
     {
@@ -75,6 +79,7 @@ class Buffer
             return [];
         }
 
+        $shape = [];
         // Bolt Optimization: Replaced O(N^2) recursive array_merge with
         // O(N) iterative while loop to calculate multi-dimensional array shape faster.
         $shape = [];
