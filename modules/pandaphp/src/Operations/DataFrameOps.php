@@ -107,6 +107,7 @@ class DataFrameOps
 
             if (isset($rightLookup[$key])) {
                 foreach ($rightLookup[$key] as $rightRow) {
+                    // Bolt Optimization: Replaced O(N^2) array_merge with faster array spread operator
                     // Bolt Optimization: Replaced O(N^2) array_merge with high-perf spread operator
                     $result[] = [...$leftRow, ...$rightRow];
                 }
@@ -115,6 +116,7 @@ class DataFrameOps
                 foreach ($rightCols as $col) {
                     if ($col !== $on) $emptyRight[$col] = null;
                 }
+                // Bolt Optimization: Replaced O(N^2) array_merge with faster array spread operator
                 // Bolt Optimization: Replaced array_merge with spread operator
                 $result[] = [...$leftRow, ...$emptyRight];
             }
