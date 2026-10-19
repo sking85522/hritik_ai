@@ -99,7 +99,14 @@ class KnowledgeRetriever {
      */
     private function searchDirect(string $query): array {
         $results = [];
-        $queryWords = array_filter(explode(' ', $query), fn($w) => strlen($w) > 2);
+        // Bolt Optimization: Replace array_filter with closure using a foreach loop for speedup.
+        $words = explode(' ', $query);
+        $queryWords = [];
+        foreach ($words as $w) {
+            if (strlen($w) > 2) {
+                $queryWords[] = $w;
+            }
+        }
         if (empty($queryWords)) return [];
 
         $categories = ['general', 'qa', 'logic'];

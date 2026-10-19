@@ -147,7 +147,14 @@ class NeuralReasoning {
         static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'me'=>true, 'my'=>true, 'what'=>true, 'who'=>true, 'how'=>true, 'where'=>true, 'kyu'=>true, 'kaise'=>true, 'btao'=>true, 'batano'=>true, 'kya'=>true, 'hai'=>true, 'ki'=>true, 'ka'=>true, 'ke'=>true, 'mein'=>true, 'hritik'=>true, 'ai'=>true, 'delhi'=>true, 'toh'=>true, 'aur'=>true, 'thi'=>true, 'tha'=>true];
         $cleanText = strtolower(preg_replace('/[^\p{L}\p{N} ]/u', ' ', $text));
         $words = explode(' ', $cleanText);
-        $this->keywords = array_values(array_filter($words, fn($w) => mb_strlen($w) > 2 && !isset($stopWords[$w])));
+        // Bolt Optimization: Replace array_filter with closure using a foreach loop for speedup.
+        $result = [];
+        foreach ($words as $w) {
+            if (mb_strlen($w) > 2 && !isset($stopWords[$w])) {
+                $result[] = $w;
+            }
+        }
+        $this->keywords = $result;
         return $this->keywords;
     }
 }
