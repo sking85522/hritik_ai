@@ -46,9 +46,9 @@ class Buffer
 
     /**
      * @param mixed $data
-     * @return array
+     * @return mixed
      */
-    private function castData($data): array
+    private function castData($data)
     {
         if (is_array($data)) {
             return array_map([$this, 'castData'], $data);
