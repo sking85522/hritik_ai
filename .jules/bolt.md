@@ -1,3 +1,7 @@
+## 2024-07-23 - Early Return and array_merge
+
+**Learning:** PHP `array_merge` allocates a new array immediately. If `array_merge` is used in a `foreach` loop that has an early `return` condition, the full cost of merging both arrays is paid upfront, regardless of whether the entire combined array is actually iterated over.
+**Action:** In methods that search through multiple arrays for a single match (early return), iterate through the arrays sequentially rather than merging them. This allows the search to terminate early without paying the allocation and processing cost for the later arrays.
 ## 2024-11-20 - O(N^2) Overheads in Pandas PHP
 **Learning:** Method calls inside loops in PHP add considerable overhead, especially in data processing systems like DataFrames (e.g., PandaPHP). Array-fetching operations such as `$df->get()` should be pre-fetched into a standard PHP array to achieve O(1) direct access.
 Additionally, `array_merge()` inside nested loops for joins causes massive memory reallocation and O(N^2) complexity.
