@@ -69,6 +69,9 @@ Additionally, `array_merge()` inside nested loops for joins causes massive memor
 **Learning:** In PHP, using `array_merge` inside deep recursive loops (like parsing multidimensional numerical arrays in `Argwhere`) causes heavy memory reallocation overhead (O(N) operation per step).
 **Action:** Replace `array_merge` inside recursive structure traversal with O(1) stack operations: `$array[] = $val; recursiveCall($array); array_pop($array);`. This achieves massive speedups while maintaining the same immutable behavior down the stack.
 
+## 2024-07-30 - O(N²) array_merge in Shape Calculation
+**Learning:** In PHP, calculating the shape of multidimensional arrays using `array_merge` recursively (e.g., `$shape = array_merge($shape, calculateShape($data[0]))`) has O(N²) algorithmic complexity and severe memory reallocation overhead as array depth grows.
+**Action:** Always prefer iterative while loops (`while (is_array($level))`) to traverse deeply nested array dimensions for calculating shape. It scales strictly linearly, uses zero extra memory allocation, and is significantly faster than both recursive `array_merge` and recursive pass-by-reference.
 ## 2024-07-28 - strtr vs str_replace for Dictionary Mappings
 **Learning:** In PHP, using `strtr($text, $mapping)` for dictionary-based string replacements is significantly faster (~2.2x speedup) than iterating over the mapping array with a `foreach` loop and calling `str_replace()`. It is also faster than calling `str_replace(array_keys($mapping), array_values($mapping), $text)`. This is because `strtr()` operates natively in C and performs a single pass over the string for replacements without additional array overhead.
 **Action:** When performing dictionary-based string normalizations or translations, always use `strtr($text, $mapping)` instead of iterating with `str_replace`.
