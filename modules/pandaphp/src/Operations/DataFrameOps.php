@@ -21,13 +21,21 @@ class DataFrameOps
         $shape = $df->shape();
         $groups = [];
 
+        // Bolt Optimization: Pre-fetch column data for O(1) access instead of method calls in loop
+        $dataArr = [];
+        foreach ($columns as $col) {
+            $dataArr[$col] = $df->getColumn($col)->getData();
+        }
+        // Fix: Groupby column might not be in $columns if selecting subset
+        $onData = isset($dataArr[$column]) ? $dataArr[$column] : $df->getColumn($column)->getData();
+
         // Build groups
         for ($i = 0; $i < $shape[0]; $i++) {
-            $key = $df->get($column, $i);
+            $key = $onData[$i];
             if (!isset($groups[$key])) $groups[$key] = [];
             $row = [];
             foreach ($columns as $col) {
-                $row[$col] = $df->get($col, $i);
+                $row[$col] = $dataArr[$col][$i];
             }
             $groups[$key][] = $row;
         }
@@ -64,35 +72,51 @@ class DataFrameOps
         $leftCols = $left->columns();
         $rightCols = $right->columns();
 
+        // Bolt Optimization: Pre-fetch column data for O(1) access
+        $rightDataArr = [];
+        foreach ($rightCols as $col) {
+            $rightDataArr[$col] = $right->getColumn($col)->getData();
+        }
+
         // Build right lookup
         $rightLookup = [];
+        $rightOnData = $rightDataArr[$on];
         for ($i = 0; $i < $rightShape[0]; $i++) {
-            $key = $right->get($on, $i);
+            $key = $rightOnData[$i];
             $row = [];
             foreach ($rightCols as $col) {
-                if ($col !== $on) $row[$col] = $right->get($col, $i);
+                if ($col !== $on) $row[$col] = $rightDataArr[$col][$i];
             }
             $rightLookup[$key][] = $row;
         }
 
         $result = [];
+        // Bolt Optimization: Pre-fetch left column data
+        $leftDataArr = [];
+        foreach ($leftCols as $col) {
+            $leftDataArr[$col] = $left->getColumn($col)->getData();
+        }
+        $leftOnData = $leftDataArr[$on];
+
         for ($i = 0; $i < $leftShape[0]; $i++) {
-            $key = $left->get($on, $i);
+            $key = $leftOnData[$i];
             $leftRow = [];
             foreach ($leftCols as $col) {
-                $leftRow[$col] = $left->get($col, $i);
+                $leftRow[$col] = $leftDataArr[$col][$i];
             }
 
             if (isset($rightLookup[$key])) {
                 foreach ($rightLookup[$key] as $rightRow) {
-                    $result[] = array_merge($leftRow, $rightRow);
+                    // Bolt Optimization: Replaced O(N^2) array_merge with high-perf spread operator
+                    $result[] = [...$leftRow, ...$rightRow];
                 }
             } elseif ($how === 'left') {
                 $emptyRight = [];
                 foreach ($rightCols as $col) {
                     if ($col !== $on) $emptyRight[$col] = null;
                 }
-                $result[] = array_merge($leftRow, $emptyRight);
+                // Bolt Optimization: Replaced array_merge with spread operator
+                $result[] = [...$leftRow, ...$emptyRight];
             }
         }
 
@@ -107,10 +131,17 @@ class DataFrameOps
         $shape = $df->shape();
         $columns = $df->columns();
         $rows = [];
+
+        // Bolt Optimization: Pre-fetch column data for O(1) access
+        $dataArr = [];
+        foreach ($columns as $col) {
+            $dataArr[$col] = $df->getColumn($col)->getData();
+        }
+
         for ($i = 0; $i < $shape[0]; $i++) {
             $row = [];
             foreach ($columns as $col) {
-                $row[$col] = $df->get($col, $i);
+                $row[$col] = $dataArr[$col][$i];
             }
             $rows[] = $row;
         }
@@ -130,8 +161,11 @@ class DataFrameOps
     {
         $shape = $df->shape();
         $counts = [];
+
+        // Bolt Optimization: Pre-fetch column data
+        $colData = $df->getColumn($column)->getData();
         for ($i = 0; $i < $shape[0]; $i++) {
-            $val = $df->get($column, $i);
+            $val = $colData[$i];
             $counts[$val] = ($counts[$val] ?? 0) + 1;
         }
         arsort($counts);
@@ -145,8 +179,11 @@ class DataFrameOps
     {
         $shape = $df->shape();
         $result = [];
+
+        // Bolt Optimization: Pre-fetch column data
+        $colData = $df->getColumn($column)->getData();
         for ($i = 0; $i < $shape[0]; $i++) {
-            $result[] = $func($df->get($column, $i));
+            $result[] = $func($colData[$i]);
         }
         return $result;
     }
@@ -160,10 +197,17 @@ class DataFrameOps
         $shape = $df->shape();
         $stats = [];
 
+        // Bolt Optimization: Pre-fetch column data
+        $dataArr = [];
+        foreach ($columns as $col) {
+            $dataArr[$col] = $df->getColumn($col)->getData();
+        }
+
         foreach ($columns as $col) {
             $values = [];
+            $colData = $dataArr[$col];
             for ($i = 0; $i < $shape[0]; $i++) {
-                $v = $df->get($col, $i);
+                $v = $colData[$i];
                 if (is_numeric($v)) $values[] = (float)$v;
             }
             if (empty($values)) continue;
