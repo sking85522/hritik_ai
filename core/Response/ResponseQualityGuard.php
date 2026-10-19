@@ -153,6 +153,8 @@ class ResponseQualityGuard {
         static $stopWords = ['is'=>true, 'the'=>true, 'a'=>true, 'an'=>true, 'me'=>true, 'my'=>true, 'what'=>true, 'who'=>true, 'how'=>true, 'where'=>true, 'kyu'=>true, 'kaise'=>true, 'btao'=>true, 'batano'=>true, 'kya'=>true, 'hai'=>true, 'ki'=>true, 'ka'=>true, 'ke'=>true, 'aur'=>true, 'mein'=>true, 'main'=>true, 'to'=>true, 'of'=>true, 'hritik'=>true, 'ai'=>true];
         $text = strtolower(preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text));
 
+        // Bolt Optimization: Replace array_filter with closure using a foreach loop for speedup.
+        $result = [];
         // ⚡ Bolt optimization: Use PREG_SPLIT_NO_EMPTY natively in C engine
         $words = preg_split('/\s+/', trim($text), -1, PREG_SPLIT_NO_EMPTY);
 

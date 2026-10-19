@@ -179,6 +179,13 @@ class OnlineCloudMemory {
             }
         }
 
+        // Bolt Optimization: Replace array_filter with closure using a foreach loop for speedup.
+        $result = [];
+        foreach ($words as $w) {
+            if (strlen($w) > 2 && !isset($stopWords[$w])) {
+                $result[] = $w;
+            }
+        }
         return $result;
     }
 
