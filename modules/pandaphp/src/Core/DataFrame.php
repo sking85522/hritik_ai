@@ -114,6 +114,19 @@ class DataFrame
         return clone $this->data[$name];
     }
 
+    public function columns(): array
+    {
+        return $this->columns;
+    }
+
+    public function get(string $col, int $idx)
+    {
+        if (!isset($this->data[$col])) {
+            throw new \InvalidArgumentException("Column '$col' not found.");
+        }
+        return $this->data[$col]->getData()[$idx];
+    }
+
     // Select subset of rows by integer location
     public function iloc(int $start, ?int $end = null): DataFrame
     {
